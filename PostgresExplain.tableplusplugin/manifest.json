@@ -1,0 +1,19 @@
+{
+  "name": "PostgreSQL Visual Explain",
+  "identifier": "com.tinyapp.TablePlus.PostgresExplain",
+  "version": "1.0.0",
+  "detail": "Execute PostgreSQL EXPLAIN queries and visualize with pev2",
+  "author": "TablePlus",
+  "authorEmail": "neil@example.com",
+  "site": "https://github.com/tableplus/postgres-explain",
+  "scripts": [
+    {
+      "name": "Run Explain",
+      "location": "main",
+      "type": "action",
+      "script": "explain.js",
+      "handler": "runExplain",
+      "shortcut": "cmd+shift+e"
+    }
+  ]
+}
