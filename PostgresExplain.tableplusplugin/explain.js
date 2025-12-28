@@ -149,6 +149,32 @@ function generateExplainHTML(originalQuery, planData) {
           // Buffer info
           sharedHitBlocks: node['Shared Hit Blocks'] || 0,
           sharedReadBlocks: node['Shared Read Blocks'] || 0,
+          sharedDirtiedBlocks: node['Shared Dirtied Blocks'] || 0,
+          sharedWrittenBlocks: node['Shared Written Blocks'] || 0,
+          localHitBlocks: node['Local Hit Blocks'] || 0,
+          localReadBlocks: node['Local Read Blocks'] || 0,
+          tempReadBlocks: node['Temp Read Blocks'] || 0,
+          tempWrittenBlocks: node['Temp Written Blocks'] || 0,
+
+          // I/O Timing (if available)
+          ioReadTime: node['I/O Read Time'] || null,
+          ioWriteTime: node['I/O Write Time'] || null,
+
+          // Filter selectivity
+          rowsRemovedByFilter: node['Rows Removed by Filter'] || null,
+          rowsRemovedByJoinFilter: node['Rows Removed by Join Filter'] || null,
+
+          // Index info
+          heapFetches: node['Heap Fetches'] || null,
+          exactHeapBlocks: node['Exact Heap Blocks'] || null,
+          lossyHeapBlocks: node['Lossy Heap Blocks'] || null,
+
+          // Parallel query info
+          workersPlanned: node['Workers Planned'] || null,
+          workersLaunched: node['Workers Launched'] || null,
+
+          // Output columns (VERBOSE)
+          output: node['Output'] ? node['Output'].join(', ') : null,
 
           // Performance indicators
           estimationAccuracy: estimationAccuracy,
@@ -864,25 +890,119 @@ function generateExplainHTML(originalQuery, planData) {
         content += '</div>';
       }
 
-      // Buffer Info
-      if (d.data.details.sharedHitBlocks > 0 || d.data.details.sharedReadBlocks > 0) {
+      // Parallel Query Info
+      if (d.data.details.workersPlanned || d.data.details.workersLaunched) {
         content += '<div class="detail-section">';
-        content += '<div class="detail-section-title">Buffers</div>';
-        content += '<div class="detail-item"><span class="detail-label">Cache Hits:</span> <span class="detail-value">' + d.data.details.sharedHitBlocks + ' blocks</span></div>';
-        content += '<div class="detail-item"><span class="detail-label">Disk Reads:</span> <span class="detail-value">' + d.data.details.sharedReadBlocks + ' blocks</span></div>';
-
-        if (d.data.details.sharedReadBlocks > 0) {
-          const hitRate = (d.data.details.sharedHitBlocks / (d.data.details.sharedHitBlocks + d.data.details.sharedReadBlocks) * 100).toFixed(1);
-          content += '<div class="detail-item"><span class="detail-label">Hit Rate:</span> <span class="detail-value">' + hitRate + '%</span></div>';
+        content += '<div class="detail-section-title">Parallel Execution</div>';
+        if (d.data.details.workersPlanned) {
+          content += '<div class="detail-item"><span class="detail-label">Workers Planned:</span> <span class="detail-value">' + d.data.details.workersPlanned + '</span></div>';
+        }
+        if (d.data.details.workersLaunched) {
+          content += '<div class="detail-item"><span class="detail-label">Workers Launched:</span> <span class="detail-value">' + d.data.details.workersLaunched + '</span></div>';
         }
         content += '</div>';
       }
 
-      // Filter
-      if (d.data.details.filter) {
+      // Filter & Selectivity
+      if (d.data.details.filter || d.data.details.rowsRemovedByFilter !== null) {
         content += '<div class="detail-section">';
         content += '<div class="detail-section-title">Filter</div>';
-        content += '<div class="detail-item"><span class="detail-value">' + d.data.details.filter + '</span></div>';
+        if (d.data.details.filter) {
+          content += '<div class="detail-item"><span class="detail-label">Condition:</span> <span class="detail-value">' + d.data.details.filter + '</span></div>';
+        }
+        if (d.data.details.rowsRemovedByFilter !== null) {
+          content += '<div class="detail-item"><span class="detail-label">Rows Removed:</span> <span class="detail-value">' + d.data.details.rowsRemovedByFilter + '</span></div>';
+          const totalRows = d.data.details.actualRows + d.data.details.rowsRemovedByFilter;
+          const selectivity = totalRows > 0 ? ((d.data.details.actualRows / totalRows) * 100).toFixed(1) : 0;
+          content += '<div class="detail-item"><span class="detail-label">Selectivity:</span> <span class="detail-value">' + selectivity + '%</span></div>';
+        }
+        if (d.data.details.rowsRemovedByJoinFilter !== null) {
+          content += '<div class="detail-item"><span class="detail-label">Rows Removed (Join):</span> <span class="detail-value">' + d.data.details.rowsRemovedByJoinFilter + '</span></div>';
+        }
+        content += '</div>';
+      }
+
+      // Index-Specific Info
+      if (d.data.details.heapFetches || d.data.details.exactHeapBlocks || d.data.details.lossyHeapBlocks) {
+        content += '<div class="detail-section">';
+        content += '<div class="detail-section-title">Index Scan Details</div>';
+        if (d.data.details.heapFetches) {
+          content += '<div class="detail-item"><span class="detail-label">Heap Fetches:</span> <span class="detail-value">' + d.data.details.heapFetches + '</span></div>';
+        }
+        if (d.data.details.exactHeapBlocks) {
+          content += '<div class="detail-item"><span class="detail-label">Exact Heap Blocks:</span> <span class="detail-value">' + d.data.details.exactHeapBlocks + '</span></div>';
+        }
+        if (d.data.details.lossyHeapBlocks) {
+          content += '<div class="detail-item"><span class="detail-label">Lossy Heap Blocks:</span> <span class="detail-value">' + d.data.details.lossyHeapBlocks + '</span></div>';
+        }
+        content += '</div>';
+      }
+
+      // Buffer Info (Enhanced)
+      const hasBufferInfo = d.data.details.sharedHitBlocks > 0 ||
+                           d.data.details.sharedReadBlocks > 0 ||
+                           d.data.details.sharedDirtiedBlocks > 0 ||
+                           d.data.details.sharedWrittenBlocks > 0 ||
+                           d.data.details.localHitBlocks > 0 ||
+                           d.data.details.localReadBlocks > 0 ||
+                           d.data.details.tempReadBlocks > 0 ||
+                           d.data.details.tempWrittenBlocks > 0;
+
+      if (hasBufferInfo) {
+        content += '<div class="detail-section">';
+        content += '<div class="detail-section-title">Buffers</div>';
+
+        // Shared buffers
+        if (d.data.details.sharedHitBlocks > 0 || d.data.details.sharedReadBlocks > 0) {
+          content += '<div class="detail-item"><span class="detail-label">Shared Hit:</span> <span class="detail-value">' + d.data.details.sharedHitBlocks + ' blocks</span></div>';
+          content += '<div class="detail-item"><span class="detail-label">Shared Read:</span> <span class="detail-value">' + d.data.details.sharedReadBlocks + ' blocks</span></div>';
+
+          if (d.data.details.sharedReadBlocks > 0) {
+            const hitRate = (d.data.details.sharedHitBlocks / (d.data.details.sharedHitBlocks + d.data.details.sharedReadBlocks) * 100).toFixed(1);
+            content += '<div class="detail-item"><span class="detail-label">Cache Hit Rate:</span> <span class="detail-value">' + hitRate + '%</span></div>';
+          }
+        }
+
+        if (d.data.details.sharedDirtiedBlocks > 0) {
+          content += '<div class="detail-item"><span class="detail-label">Shared Dirtied:</span> <span class="detail-value">' + d.data.details.sharedDirtiedBlocks + ' blocks</span></div>';
+        }
+        if (d.data.details.sharedWrittenBlocks > 0) {
+          content += '<div class="detail-item"><span class="detail-label">Shared Written:</span> <span class="detail-value">' + d.data.details.sharedWrittenBlocks + ' blocks</span></div>';
+        }
+
+        // Local buffers
+        if (d.data.details.localHitBlocks > 0 || d.data.details.localReadBlocks > 0) {
+          content += '<div class="detail-item"><span class="detail-label">Local Hit:</span> <span class="detail-value">' + d.data.details.localHitBlocks + ' blocks</span></div>';
+          content += '<div class="detail-item"><span class="detail-label">Local Read:</span> <span class="detail-value">' + d.data.details.localReadBlocks + ' blocks</span></div>';
+        }
+
+        // Temp buffers
+        if (d.data.details.tempReadBlocks > 0 || d.data.details.tempWrittenBlocks > 0) {
+          content += '<div class="detail-item"><span class="detail-label">Temp Read:</span> <span class="detail-value">' + d.data.details.tempReadBlocks + ' blocks</span></div>';
+          content += '<div class="detail-item"><span class="detail-label">Temp Written:</span> <span class="detail-value">' + d.data.details.tempWrittenBlocks + ' blocks</span></div>';
+        }
+
+        content += '</div>';
+      }
+
+      // I/O Timing
+      if (d.data.details.ioReadTime !== null || d.data.details.ioWriteTime !== null) {
+        content += '<div class="detail-section">';
+        content += '<div class="detail-section-title">I/O Timing</div>';
+        if (d.data.details.ioReadTime !== null) {
+          content += '<div class="detail-item"><span class="detail-label">Read Time:</span> <span class="detail-value">' + d.data.details.ioReadTime.toFixed(3) + ' ms</span></div>';
+        }
+        if (d.data.details.ioWriteTime !== null) {
+          content += '<div class="detail-item"><span class="detail-label">Write Time:</span> <span class="detail-value">' + d.data.details.ioWriteTime.toFixed(3) + ' ms</span></div>';
+        }
+        content += '</div>';
+      }
+
+      // Output Columns (if VERBOSE)
+      if (d.data.details.output) {
+        content += '<div class="detail-section">';
+        content += '<div class="detail-section-title">Output</div>';
+        content += '<div class="detail-item"><span class="detail-value" style="word-break: break-word;">' + d.data.details.output + '</span></div>';
         content += '</div>';
       }
 
@@ -986,9 +1106,8 @@ function generateExplainHTML(originalQuery, planData) {
         let className = 'node';
         const cost = parseFloat(d.data.details.cost);
 
-        if (d.data.details.estimationOff) {
-          className += ' warning';
-        } else if (cost > 1000) {
+        // Color based purely on cost, not estimation accuracy
+        if (cost > 1000) {
           className += ' expensive';
         } else if (cost > 100) {
           className += ' moderate';
