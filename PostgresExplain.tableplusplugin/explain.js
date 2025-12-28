@@ -205,106 +205,238 @@ function generateExplainHTML(originalQuery, planData) {
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f5f7fa;
-      padding: 20px;
+      background: #1e1e1e;
+      overflow: hidden;
+      height: 100vh;
     }
-    .container {
-      max-width: 100%;
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      padding: 20px;
+    .app-container {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
     }
-    h1 {
-      color: #2c3e50;
-      margin-bottom: 10px;
-      font-size: 24px;
+    /* SIDEBARS */
+    .sidebar {
+      background: #252526;
+      border-right: 1px solid #3e3e42;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: width 0.2s ease, min-width 0.2s ease;
+    }
+    .sidebar.collapsed {
+      width: 0 !important;
+      min-width: 0 !important;
+      border: none;
+    }
+    .left-sidebar {
+      width: 350px;
+      min-width: 250px;
+      max-width: 600px;
+    }
+    .right-sidebar {
+      width: 400px;
+      min-width: 300px;
+      max-width: 700px;
+      border-right: none;
+      border-left: 1px solid #3e3e42;
+    }
+    .sidebar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: #2d2d30;
+      border-bottom: 1px solid #3e3e42;
+      flex-shrink: 0;
+    }
+    .sidebar-header h3 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #cccccc;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .collapse-btn {
+      background: none;
+      border: none;
+      color: #cccccc;
+      cursor: pointer;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      border-radius: 3px;
+      font-size: 18px;
+    }
+    .collapse-btn:hover {
+      background: #3e3e42;
+    }
+    .sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 16px;
+    }
+    .sidebar-content::-webkit-scrollbar {
+      width: 8px;
+    }
+    .sidebar-content::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .sidebar-content::-webkit-scrollbar-thumb {
+      background: #3e3e42;
+      border-radius: 4px;
+    }
+    .sidebar-content::-webkit-scrollbar-thumb:hover {
+      background: #4e4e52;
+    }
+
+    /* RESIZE HANDLES */
+    .resize-handle {
+      width: 4px;
+      background: #3e3e42;
+      cursor: col-resize;
+      flex-shrink: 0;
+      position: relative;
+      transition: background 0.15s;
+    }
+    .resize-handle:hover,
+    .resize-handle.dragging {
+      background: #007acc;
+    }
+
+    /* MAIN CONTENT */
+    .main-content {
+      flex: 1;
+      background: #1e1e1e;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .main-header {
+      padding: 20px;
+      background: #252526;
+      border-bottom: 1px solid #3e3e42;
+      flex-shrink: 0;
+    }
+    .main-header h1 {
+      font-size: 20px;
+      color: #cccccc;
+      margin-bottom: 4px;
     }
     .metadata {
-      color: #7f8c8d;
+      font-size: 12px;
+      color: #858585;
+    }
+    #tree-container {
+      flex: 1;
+      overflow: auto;
+      padding: 20px;
+    }
+
+    /* QUERY PANEL */
+    .query-panel {
       margin-bottom: 20px;
-      font-size: 14px;
     }
-    .summary {
-      background: #ecf0f1;
-      padding: 15px;
-      border-radius: 4px;
-      margin-bottom: 20px;
-    }
-    .summary-item {
-      display: inline-block;
-      margin-right: 20px;
-      margin-bottom: 5px;
-    }
-    .summary-label {
+    .query-panel h4,
+    .stats-panel h4 {
+      font-size: 12px;
       font-weight: 600;
-      color: #34495e;
-    }
-    .summary-value {
-      color: #2980b9;
-      font-weight: 700;
-    }
-    .query-section {
-      margin-bottom: 20px;
-    }
-    .query-section summary {
-      cursor: pointer;
-      font-weight: 600;
-      color: #2c3e50;
-      padding: 10px;
-      background: #ecf0f1;
-      border-radius: 4px;
-      user-select: none;
-    }
-    .query-section summary:hover {
-      background: #d5dbdb;
+      color: #858585;
+      text-transform: uppercase;
+      margin-bottom: 8px;
     }
     .query-text {
       font-family: 'Monaco', 'Courier New', monospace;
-      font-size: 13px;
-      background: #2c3e50;
-      color: #ecf0f1;
-      padding: 15px;
+      font-size: 12px;
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 12px;
       border-radius: 4px;
+      border: 1px solid #3e3e42;
       overflow-x: auto;
       white-space: pre;
-      margin-top: 10px;
+      line-height: 1.5;
+      max-height: 300px;
+      overflow-y: auto;
     }
-    .legend {
-      background: #fff;
-      padding: 15px;
-      border-radius: 4px;
-      margin-bottom: 20px;
-      border: 1px solid #ddd;
+
+    /* STATISTICS PANEL */
+    .stats-panel {
+      margin-top: 20px;
     }
-    .legend-title {
+    .stat-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 12px;
+      margin-bottom: 4px;
+      background: #1e1e1e;
+      border-radius: 3px;
+      border: 1px solid #3e3e42;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: #858585;
+      font-weight: 500;
+    }
+    .stat-value {
+      font-size: 12px;
+      color: #4fc3f7;
       font-weight: 600;
-      margin-bottom: 10px;
-      color: #2c3e50;
     }
-    .legend-item {
-      display: inline-block;
-      margin-right: 20px;
-      margin-bottom: 5px;
+
+    /* NODE DETAILS (right sidebar) */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #858585;
+      font-size: 13px;
+    }
+    .detail-section {
+      margin-bottom: 20px;
+    }
+    .detail-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: #4fc3f7;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
+    }
+    .detail-title {
+      font-size: 16px;
+      color: #4CAF50;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+    .detail-item {
+      padding: 6px 0;
+      border-bottom: 1px solid #3e3e42;
       font-size: 12px;
     }
-    .legend-color {
-      display: inline-block;
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      margin-right: 5px;
-      vertical-align: middle;
+    .detail-item:last-child {
+      border-bottom: none;
     }
-    #tree-container {
-      overflow-x: auto;
-      margin-top: 20px;
+    .detail-label {
+      color: #858585;
+      margin-bottom: 2px;
+      display: inline-block;
+      min-width: 120px;
+      font-weight: 500;
+    }
+    .detail-value {
+      color: #d4d4d4;
+      word-wrap: break-word;
+    }
+    .detail-warning {
+      color: #ff9800;
+      font-weight: 600;
     }
     .node circle {
       fill: #fff;
       stroke: #4CAF50;
       stroke-width: 3px;
       cursor: pointer;
+      transition: all 0.2s;
     }
     .node.expensive circle {
       stroke: #f44336;
@@ -317,6 +449,11 @@ function generateExplainHTML(originalQuery, planData) {
     .node.warning circle {
       stroke: #9c27b0;
       fill: #f3e5f5;
+    }
+    .node circle.selected {
+      stroke: #007acc;
+      stroke-width: 5px;
+      filter: drop-shadow(0 0 8px rgba(0, 122, 204, 0.6));
     }
     .node text {
       font-size: 11px;
@@ -343,125 +480,365 @@ function generateExplainHTML(originalQuery, planData) {
     }
     .link {
       fill: none;
-      stroke: #95a5a6;
+      stroke: #3e3e42;
       stroke-width: 2px;
     }
     .edge-label {
       font-size: 10px;
-      fill: #2980b9;
+      fill: #4fc3f7;
       font-family: 'Monaco', monospace;
-      background: white;
-      padding: 2px 4px;
-    }
-    .tooltip {
-      position: absolute;
-      background: rgba(0, 0, 0, 0.95);
-      color: white;
-      padding: 12px;
-      border-radius: 4px;
-      font-size: 11px;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.2s;
-      max-width: 400px;
-      z-index: 1000;
-      line-height: 1.6;
-    }
-    .tooltip-title {
-      font-weight: 700;
-      font-size: 13px;
-      margin-bottom: 8px;
-      color: #4CAF50;
-      border-bottom: 1px solid #555;
-      padding-bottom: 5px;
-    }
-    .tooltip-section {
-      margin: 8px 0;
-    }
-    .tooltip-section-title {
-      font-weight: 600;
-      color: #81c784;
-      font-size: 10px;
-      text-transform: uppercase;
-      margin-bottom: 4px;
-    }
-    .tooltip-item {
-      margin: 3px 0;
-      padding-left: 8px;
-    }
-    .tooltip-label {
-      font-weight: 600;
-      color: #aaa;
-      min-width: 100px;
-      display: inline-block;
-    }
-    .tooltip-value {
-      color: #fff;
-    }
-    .tooltip-warning {
-      color: #ff9800;
-      font-weight: 600;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>PostgreSQL EXPLAIN Visualization (Enhanced)</h1>
-    <div class="metadata">Generated at ${new Date().toLocaleString()}</div>
+  <div class="app-container">
+    <!-- LEFT SIDEBAR -->
+    <div class="sidebar left-sidebar" id="leftSidebar">
+      <div class="sidebar-header">
+        <h3>Query & Statistics</h3>
+        <button class="collapse-btn" id="leftCollapseBtn" title="Toggle sidebar">◀</button>
+      </div>
 
-    <div class="summary">
-      <div class="summary-item">
-        <span class="summary-label">Planning Time:</span>
-        <span class="summary-value">${planData['Planning Time'] ? planData['Planning Time'].toFixed(3) + 'ms' : 'N/A'}</span>
-      </div>
-      <div class="summary-item">
-        <span class="summary-label">Execution Time:</span>
-        <span class="summary-value">${planData['Execution Time'] ? planData['Execution Time'].toFixed(3) + 'ms' : 'N/A'}</span>
-      </div>
-      <div class="summary-item">
-        <span class="summary-label">Total Cost:</span>
-        <span class="summary-value">${planData.Plan['Total Cost'] ? planData.Plan['Total Cost'].toFixed(2) : 'N/A'}</span>
-      </div>
-      <div class="summary-item">
-        <span class="summary-label">Actual Rows:</span>
-        <span class="summary-value">${planData.Plan['Actual Rows'] || 'N/A'}</span>
+      <div class="sidebar-content">
+        <!-- Query Section -->
+        <div class="query-panel">
+          <h4>Original Query</h4>
+          <pre class="query-text">${escapedQuery}</pre>
+        </div>
+
+        <!-- Statistics Section -->
+        <div class="stats-panel">
+          <h4>Execution Statistics</h4>
+          <div class="stat-item">
+            <span class="stat-label">Planning Time</span>
+            <span class="stat-value">${planData['Planning Time'] ? planData['Planning Time'].toFixed(3) + ' ms' : 'N/A'}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Execution Time</span>
+            <span class="stat-value">${planData['Execution Time'] ? planData['Execution Time'].toFixed(3) + ' ms' : 'N/A'}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Total Cost</span>
+            <span class="stat-value">${planData.Plan['Total Cost'] ? planData.Plan['Total Cost'].toFixed(2) : 'N/A'}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Actual Rows</span>
+            <span class="stat-value">${planData.Plan['Actual Rows'] || 'N/A'}</span>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="legend">
-      <div class="legend-title">Node Color Legend:</div>
-      <div class="legend-item">
-        <span class="legend-color" style="background: #4CAF50"></span>
-        Low Cost (&lt; 100)
+    <!-- LEFT RESIZE HANDLE -->
+    <div class="resize-handle" id="leftResizeHandle"></div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+      <div class="main-header">
+        <h1>PostgreSQL EXPLAIN Visualization</h1>
+        <div class="metadata">Generated at ${new Date().toLocaleString()}</div>
       </div>
-      <div class="legend-item">
-        <span class="legend-color" style="background: #ff9800"></span>
-        Moderate Cost (100-1000)
-      </div>
-      <div class="legend-item">
-        <span class="legend-color" style="background: #f44336"></span>
-        High Cost (&gt; 1000)
-      </div>
-      <div class="legend-item">
-        <span class="legend-color" style="background: #9c27b0"></span>
-        Estimation Warning
-      </div>
+      <div id="tree-container"></div>
     </div>
 
-    <div class="query-section">
-      <details>
-        <summary>Original Query</summary>
-        <pre class="query-text">${escapedQuery}</pre>
-      </details>
-    </div>
+    <!-- RIGHT RESIZE HANDLE -->
+    <div class="resize-handle" id="rightResizeHandle"></div>
 
-    <div id="tree-container"></div>
+    <!-- RIGHT SIDEBAR -->
+    <div class="sidebar right-sidebar collapsed" id="rightSidebar">
+      <div class="sidebar-header">
+        <h3>Node Details</h3>
+        <button class="collapse-btn" id="rightCollapseBtn" title="Close sidebar">✕</button>
+      </div>
+
+      <div class="sidebar-content" id="nodeDetails">
+        <div class="empty-state">
+          <p>Click a node to view details</p>
+        </div>
+      </div>
+    </div>
   </div>
-
-  <div class="tooltip" id="tooltip"></div>
 
   <script>
     const treeData = ${treeJson};
+
+    // ============================================
+    // STATE MANAGEMENT
+    // ============================================
+    const appState = {
+      leftSidebarWidth: 350,
+      rightSidebarWidth: 400,
+      leftSidebarCollapsed: false,
+      rightSidebarCollapsed: true,
+      selectedNode: null
+    };
+
+    // Load saved state from localStorage (graceful fallback)
+    function loadState() {
+      try {
+        const saved = localStorage.getItem('pgexplain-state');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          Object.assign(appState, parsed);
+        }
+      } catch (e) {
+        // localStorage not available or failed - just use defaults
+        console.log('State persistence not available');
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem('pgexplain-state', JSON.stringify({
+          leftSidebarWidth: appState.leftSidebarWidth,
+          rightSidebarWidth: appState.rightSidebarWidth,
+          leftSidebarCollapsed: appState.leftSidebarCollapsed,
+          rightSidebarCollapsed: appState.rightSidebarCollapsed
+          // Don't persist selectedNode
+        }));
+      } catch (e) {
+        // localStorage not available - that's OK
+      }
+    }
+
+    loadState();
+
+    // ============================================
+    // SIDEBAR COLLAPSE/EXPAND
+    // ============================================
+    function toggleSidebar(side) {
+      const sidebar = document.getElementById(side === 'left' ? 'leftSidebar' : 'rightSidebar');
+      const isCollapsed = sidebar.classList.contains('collapsed');
+      const btn = document.getElementById(side === 'left' ? 'leftCollapseBtn' : 'rightCollapseBtn');
+
+      if (isCollapsed) {
+        sidebar.classList.remove('collapsed');
+        appState[side + 'SidebarCollapsed'] = false;
+        btn.textContent = side === 'left' ? '◀' : '✕';
+      } else {
+        sidebar.classList.add('collapsed');
+        appState[side + 'SidebarCollapsed'] = true;
+        btn.textContent = side === 'left' ? '▶' : '✕';
+
+        // Clear selection when closing right sidebar
+        if (side === 'right' && appState.selectedNode) {
+          d3.select(appState.selectedNode).select('circle').classed('selected', false);
+          appState.selectedNode = null;
+        }
+      }
+
+      saveState();
+    }
+
+    // Initialize collapse buttons
+    document.getElementById('leftCollapseBtn').addEventListener('click', () => toggleSidebar('left'));
+    document.getElementById('rightCollapseBtn').addEventListener('click', () => toggleSidebar('right'));
+
+    // Apply saved collapsed state
+    if (appState.leftSidebarCollapsed) {
+      document.getElementById('leftSidebar').classList.add('collapsed');
+      document.getElementById('leftCollapseBtn').textContent = '▶';
+    }
+    // Right sidebar starts collapsed by default
+
+    // ============================================
+    // RESIZE HANDLES
+    // ============================================
+    function initResizeHandles() {
+      const leftHandle = document.getElementById('leftResizeHandle');
+      const rightHandle = document.getElementById('rightResizeHandle');
+      const leftSidebar = document.getElementById('leftSidebar');
+      const rightSidebar = document.getElementById('rightSidebar');
+
+      let isResizing = false;
+      let currentHandle = null;
+      let startX = 0;
+      let startWidth = 0;
+
+      function onMouseDown(handle, sidebar, side) {
+        return function(e) {
+          // Don't resize if collapsed
+          if (sidebar.classList.contains('collapsed')) return;
+
+          isResizing = true;
+          currentHandle = handle;
+          startX = e.pageX;
+          startWidth = sidebar.offsetWidth;
+
+          handle.classList.add('dragging');
+          document.body.style.cursor = 'col-resize';
+          document.body.style.userSelect = 'none';
+
+          e.preventDefault();
+        };
+      }
+
+      function onMouseMove(e) {
+        if (!isResizing) return;
+
+        const sidebar = currentHandle === leftHandle ? leftSidebar : rightSidebar;
+        const side = currentHandle === leftHandle ? 'left' : 'right';
+        const delta = side === 'left' ? (e.pageX - startX) : (startX - e.pageX);
+        const newWidth = startWidth + delta;
+
+        // Enforce min/max
+        const minWidth = side === 'left' ? 250 : 300;
+        const maxWidth = side === 'left' ? 600 : 700;
+        const clampedWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
+
+        sidebar.style.width = clampedWidth + 'px';
+        appState[side + 'SidebarWidth'] = clampedWidth;
+      }
+
+      function onMouseUp() {
+        if (!isResizing) return;
+
+        isResizing = false;
+        currentHandle.classList.remove('dragging');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        currentHandle = null;
+
+        saveState();
+      }
+
+      leftHandle.addEventListener('mousedown', onMouseDown(leftHandle, leftSidebar, 'left'));
+      rightHandle.addEventListener('mousedown', onMouseDown(rightHandle, rightSidebar, 'right'));
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    }
+
+    initResizeHandles();
+
+    // Apply saved widths
+    document.getElementById('leftSidebar').style.width = appState.leftSidebarWidth + 'px';
+    document.getElementById('rightSidebar').style.width = appState.rightSidebarWidth + 'px';
+
+    // ============================================
+    // NODE DETAILS POPULATION
+    // ============================================
+    function populateNodeDetails(d) {
+      let content = '<div class="detail-title">' + d.data.name;
+      if (d.data.details.joinType) {
+        content += ' <span style="color: #858585;">(' + d.data.details.joinType + ' Join)</span>';
+      }
+      content += '</div>';
+
+      // Table/Relation info
+      if (d.data.details.relation) {
+        content += '<div class="detail-section">';
+        content += '<div class="detail-section-title">Table Info</div>';
+        if (d.data.details.schema) {
+          content += '<div class="detail-item"><span class="detail-label">Schema:</span> <span class="detail-value">' + d.data.details.schema + '</span></div>';
+        }
+        content += '<div class="detail-item"><span class="detail-label">Table:</span> <span class="detail-value">' + d.data.details.relation + '</span></div>';
+        if (d.data.details.alias) {
+          content += '<div class="detail-item"><span class="detail-label">Alias:</span> <span class="detail-value">' + d.data.details.alias + '</span></div>';
+        }
+        if (d.data.details.indexName) {
+          content += '<div class="detail-item"><span class="detail-label">Index:</span> <span class="detail-value">' + d.data.details.indexName + '</span></div>';
+        }
+        content += '</div>';
+      }
+
+      // Cost & Timing
+      content += '<div class="detail-section">';
+      content += '<div class="detail-section-title">Cost & Timing</div>';
+      content += '<div class="detail-item"><span class="detail-label">Total Cost:</span> <span class="detail-value">' + d.data.details.cost + '</span></div>';
+      content += '<div class="detail-item"><span class="detail-label">Startup Cost:</span> <span class="detail-value">' + d.data.details.startupCost + '</span></div>';
+      content += '<div class="detail-item"><span class="detail-label">Actual Time:</span> <span class="detail-value">' + d.data.details.actualTime + ' ms</span></div>';
+      content += '<div class="detail-item"><span class="detail-label">Startup Time:</span> <span class="detail-value">' + d.data.details.startupTime + ' ms</span></div>';
+      content += '</div>';
+
+      // Rows & Estimation
+      content += '<div class="detail-section">';
+      content += '<div class="detail-section-title">Rows</div>';
+      content += '<div class="detail-item"><span class="detail-label">Plan Rows:</span> <span class="detail-value">' + d.data.details.planRows + '</span></div>';
+      content += '<div class="detail-item"><span class="detail-label">Actual Rows:</span> <span class="detail-value">' + d.data.details.actualRows + '</span></div>';
+      content += '<div class="detail-item"><span class="detail-label">Loops:</span> <span class="detail-value">' + d.data.details.loops + '</span></div>';
+
+      if (d.data.details.estimationOff) {
+        const accuracy = d.data.details.estimationAccuracy;
+        content += '<div class="detail-item"><span class="detail-warning">⚠ Estimation Off: ' + (accuracy < 1 ? 'underestimated' : 'overestimated') + ' by ' + (Math.abs(1 - accuracy) * 100).toFixed(0) + '%</span></div>';
+      }
+      content += '</div>';
+
+      // Join Conditions
+      if (d.data.details.hashCond || d.data.details.joinFilter) {
+        content += '<div class="detail-section">';
+        content += '<div class="detail-section-title">Join Conditions</div>';
+        if (d.data.details.hashCond) {
+          content += '<div class="detail-item"><span class="detail-label">Hash Cond:</span> <span class="detail-value">' + d.data.details.hashCond + '</span></div>';
+        }
+        if (d.data.details.joinFilter) {
+          content += '<div class="detail-item"><span class="detail-label">Join Filter:</span> <span class="detail-value">' + d.data.details.joinFilter + '</span></div>';
+        }
+        if (d.data.details.innerUnique !== null) {
+          content += '<div class="detail-item"><span class="detail-label">Inner Unique:</span> <span class="detail-value">' + d.data.details.innerUnique + '</span></div>';
+        }
+        content += '</div>';
+      }
+
+      // Sort Info
+      if (d.data.details.sortKey) {
+        content += '<div class="detail-section">';
+        content += '<div class="detail-section-title">Sort Info</div>';
+        content += '<div class="detail-item"><span class="detail-label">Sort Key:</span> <span class="detail-value">' + d.data.details.sortKey + '</span></div>';
+        if (d.data.details.sortMethod) {
+          content += '<div class="detail-item"><span class="detail-label">Method:</span> <span class="detail-value">' + d.data.details.sortMethod + '</span></div>';
+        }
+        if (d.data.details.sortSpaceUsed) {
+          content += '<div class="detail-item"><span class="detail-label">Space:</span> <span class="detail-value">' + d.data.details.sortSpaceUsed + ' kB (' + d.data.details.sortSpaceType + ')</span></div>';
+        }
+        content += '</div>';
+      }
+
+      // Aggregate/Hash Info
+      if (d.data.details.strategy || d.data.details.groupKey) {
+        content += '<div class="detail-section">';
+        content += '<div class="detail-section-title">Aggregate Info</div>';
+        if (d.data.details.strategy) {
+          content += '<div class="detail-item"><span class="detail-label">Strategy:</span> <span class="detail-value">' + d.data.details.strategy + '</span></div>';
+        }
+        if (d.data.details.groupKey) {
+          content += '<div class="detail-item"><span class="detail-label">Group Key:</span> <span class="detail-value">' + d.data.details.groupKey + '</span></div>';
+        }
+        if (d.data.details.peakMemoryUsage) {
+          content += '<div class="detail-item"><span class="detail-label">Peak Memory:</span> <span class="detail-value">' + d.data.details.peakMemoryUsage + ' kB</span></div>';
+        }
+        if (d.data.details.hashAggBatches) {
+          content += '<div class="detail-item"><span class="detail-label">Hash Batches:</span> <span class="detail-value">' + d.data.details.hashAggBatches + '</span></div>';
+        }
+        if (d.data.details.hashBuckets) {
+          content += '<div class="detail-item"><span class="detail-label">Hash Buckets:</span> <span class="detail-value">' + d.data.details.hashBuckets + '</span></div>';
+        }
+        content += '</div>';
+      }
+
+      // Buffer Info
+      if (d.data.details.sharedHitBlocks > 0 || d.data.details.sharedReadBlocks > 0) {
+        content += '<div class="detail-section">';
+        content += '<div class="detail-section-title">Buffers</div>';
+        content += '<div class="detail-item"><span class="detail-label">Cache Hits:</span> <span class="detail-value">' + d.data.details.sharedHitBlocks + ' blocks</span></div>';
+        content += '<div class="detail-item"><span class="detail-label">Disk Reads:</span> <span class="detail-value">' + d.data.details.sharedReadBlocks + ' blocks</span></div>';
+
+        if (d.data.details.sharedReadBlocks > 0) {
+          const hitRate = (d.data.details.sharedHitBlocks / (d.data.details.sharedHitBlocks + d.data.details.sharedReadBlocks) * 100).toFixed(1);
+          content += '<div class="detail-item"><span class="detail-label">Hit Rate:</span> <span class="detail-value">' + hitRate + '%</span></div>';
+        }
+        content += '</div>';
+      }
+
+      // Filter
+      if (d.data.details.filter) {
+        content += '<div class="detail-section">';
+        content += '<div class="detail-section-title">Filter</div>';
+        content += '<div class="detail-item"><span class="detail-value">' + d.data.details.filter + '</span></div>';
+        content += '</div>';
+      }
+
+      document.getElementById('nodeDetails').innerHTML = content;
+    }
 
     // Set up dimensions
     const margin = {top: 20, right: 150, bottom: 20, left: 150};
@@ -538,137 +915,41 @@ function generateExplainHTML(originalQuery, planData) {
       })
       .attr('transform', d => 'translate(' + d.y + ',' + d.x + ')');
 
-    // Add circles
+    // Add circles with click handler
     nodes.append('circle')
       .attr('r', 7)
-      .on('mouseover', function(event, d) {
-        tooltip.style('opacity', 1);
+      .on('click', function(event, d) {
+        event.stopPropagation();
 
-        let content = '<div class="tooltip-title">' + d.data.name;
-        if (d.data.details.joinType) {
-          content += ' (' + d.data.details.joinType + ' Join)';
-        }
-        content += '</div>';
+        const rightSidebar = document.getElementById('rightSidebar');
+        const wasCollapsed = rightSidebar.classList.contains('collapsed');
+        const clickedSame = appState.selectedNode === this;
 
-        // Table/Relation info
-        if (d.data.details.relation) {
-          content += '<div class="tooltip-section">';
-          content += '<div class="tooltip-section-title">Table Info</div>';
-          if (d.data.details.schema) {
-            content += '<div class="tooltip-item"><span class="tooltip-label">Schema:</span> <span class="tooltip-value">' + d.data.details.schema + '</span></div>';
-          }
-          content += '<div class="tooltip-item"><span class="tooltip-label">Table:</span> <span class="tooltip-value">' + d.data.details.relation + '</span></div>';
-          if (d.data.details.alias) {
-            content += '<div class="tooltip-item"><span class="tooltip-label">Alias:</span> <span class="tooltip-value">' + d.data.details.alias + '</span></div>';
-          }
-          if (d.data.details.indexName) {
-            content += '<div class="tooltip-item"><span class="tooltip-label">Index:</span> <span class="tooltip-value">' + d.data.details.indexName + '</span></div>';
-          }
-          content += '</div>';
+        // Clear previous selection
+        if (appState.selectedNode) {
+          d3.select(appState.selectedNode).select('circle').classed('selected', false);
         }
 
-        // Cost & Timing
-        content += '<div class="tooltip-section">';
-        content += '<div class="tooltip-section-title">Cost & Timing</div>';
-        content += '<div class="tooltip-item"><span class="tooltip-label">Total Cost:</span> <span class="tooltip-value">' + d.data.details.cost + '</span></div>';
-        content += '<div class="tooltip-item"><span class="tooltip-label">Startup Cost:</span> <span class="tooltip-value">' + d.data.details.startupCost + '</span></div>';
-        content += '<div class="tooltip-item"><span class="tooltip-label">Actual Time:</span> <span class="tooltip-value">' + d.data.details.actualTime + ' ms</span></div>';
-        content += '<div class="tooltip-item"><span class="tooltip-label">Startup Time:</span> <span class="tooltip-value">' + d.data.details.startupTime + ' ms</span></div>';
-        content += '</div>';
-
-        // Rows & Estimation
-        content += '<div class="tooltip-section">';
-        content += '<div class="tooltip-section-title">Rows</div>';
-        content += '<div class="tooltip-item"><span class="tooltip-label">Plan Rows:</span> <span class="tooltip-value">' + d.data.details.planRows + '</span></div>';
-        content += '<div class="tooltip-item"><span class="tooltip-label">Actual Rows:</span> <span class="tooltip-value">' + d.data.details.actualRows + '</span></div>';
-        content += '<div class="tooltip-item"><span class="tooltip-label">Loops:</span> <span class="tooltip-value">' + d.data.details.loops + '</span></div>';
-
-        if (d.data.details.estimationOff) {
-          const accuracy = d.data.details.estimationAccuracy;
-          content += '<div class="tooltip-item"><span class="tooltip-warning">⚠ Estimation Off: ' + (accuracy < 1 ? 'underestimated' : 'overestimated') + ' by ' + (Math.abs(1 - accuracy) * 100).toFixed(0) + '%</span></div>';
-        }
-        content += '</div>';
-
-        // Join Conditions
-        if (d.data.details.hashCond || d.data.details.joinFilter) {
-          content += '<div class="tooltip-section">';
-          content += '<div class="tooltip-section-title">Join Conditions</div>';
-          if (d.data.details.hashCond) {
-            content += '<div class="tooltip-item"><span class="tooltip-label">Hash Cond:</span> <span class="tooltip-value">' + d.data.details.hashCond + '</span></div>';
-          }
-          if (d.data.details.joinFilter) {
-            content += '<div class="tooltip-item"><span class="tooltip-label">Join Filter:</span> <span class="tooltip-value">' + d.data.details.joinFilter + '</span></div>';
-          }
-          if (d.data.details.innerUnique !== null) {
-            content += '<div class="tooltip-item"><span class="tooltip-label">Inner Unique:</span> <span class="tooltip-value">' + d.data.details.innerUnique + '</span></div>';
-          }
-          content += '</div>';
+        // If clicking same node, collapse sidebar
+        if (clickedSame && !wasCollapsed) {
+          toggleSidebar('right');
+          appState.selectedNode = null;
+          return;
         }
 
-        // Sort Info
-        if (d.data.details.sortKey) {
-          content += '<div class="tooltip-section">';
-          content += '<div class="tooltip-section-title">Sort Info</div>';
-          content += '<div class="tooltip-item"><span class="tooltip-label">Sort Key:</span> <span class="tooltip-value">' + d.data.details.sortKey + '</span></div>';
-          if (d.data.details.sortMethod) {
-            content += '<div class="tooltip-item"><span class="tooltip-label">Method:</span> <span class="tooltip-value">' + d.data.details.sortMethod + '</span></div>';
-          }
-          if (d.data.details.sortSpaceUsed) {
-            content += '<div class="tooltip-item"><span class="tooltip-label">Space:</span> <span class="tooltip-value">' + d.data.details.sortSpaceUsed + ' kB (' + d.data.details.sortSpaceType + ')</span></div>';
-          }
-          content += '</div>';
+        // Select new node
+        d3.select(this).classed('selected', true);
+        appState.selectedNode = this;
+
+        // Open sidebar if collapsed
+        if (wasCollapsed) {
+          rightSidebar.classList.remove('collapsed');
+          appState.rightSidebarCollapsed = false;
+          saveState();
         }
 
-        // Aggregate/Hash Info
-        if (d.data.details.strategy || d.data.details.groupKey) {
-          content += '<div class="tooltip-section">';
-          content += '<div class="tooltip-section-title">Aggregate Info</div>';
-          if (d.data.details.strategy) {
-            content += '<div class="tooltip-item"><span class="tooltip-label">Strategy:</span> <span class="tooltip-value">' + d.data.details.strategy + '</span></div>';
-          }
-          if (d.data.details.groupKey) {
-            content += '<div class="tooltip-item"><span class="tooltip-label">Group Key:</span> <span class="tooltip-value">' + d.data.details.groupKey + '</span></div>';
-          }
-          if (d.data.details.peakMemoryUsage) {
-            content += '<div class="tooltip-item"><span class="tooltip-label">Peak Memory:</span> <span class="tooltip-value">' + d.data.details.peakMemoryUsage + ' kB</span></div>';
-          }
-          if (d.data.details.hashAggBatches) {
-            content += '<div class="tooltip-item"><span class="tooltip-label">Hash Batches:</span> <span class="tooltip-value">' + d.data.details.hashAggBatches + '</span></div>';
-          }
-          if (d.data.details.hashBuckets) {
-            content += '<div class="tooltip-item"><span class="tooltip-label">Hash Buckets:</span> <span class="tooltip-value">' + d.data.details.hashBuckets + '</span></div>';
-          }
-          content += '</div>';
-        }
-
-        // Buffer Info
-        if (d.data.details.sharedHitBlocks > 0 || d.data.details.sharedReadBlocks > 0) {
-          content += '<div class="tooltip-section">';
-          content += '<div class="tooltip-section-title">Buffers</div>';
-          content += '<div class="tooltip-item"><span class="tooltip-label">Cache Hits:</span> <span class="tooltip-value">' + d.data.details.sharedHitBlocks + ' blocks</span></div>';
-          content += '<div class="tooltip-item"><span class="tooltip-label">Disk Reads:</span> <span class="tooltip-value">' + d.data.details.sharedReadBlocks + ' blocks</span></div>';
-
-          if (d.data.details.sharedReadBlocks > 0) {
-            const hitRate = (d.data.details.sharedHitBlocks / (d.data.details.sharedHitBlocks + d.data.details.sharedReadBlocks) * 100).toFixed(1);
-            content += '<div class="tooltip-item"><span class="tooltip-label">Hit Rate:</span> <span class="tooltip-value">' + hitRate + '%</span></div>';
-          }
-          content += '</div>';
-        }
-
-        // Filter
-        if (d.data.details.filter) {
-          content += '<div class="tooltip-section">';
-          content += '<div class="tooltip-section-title">Filter</div>';
-          content += '<div class="tooltip-item"><span class="tooltip-value">' + d.data.details.filter + '</span></div>';
-          content += '</div>';
-        }
-
-        tooltip.html(content)
-          .style('left', (event.pageX + 10) + 'px')
-          .style('top', (event.pageY - 10) + 'px');
-      })
-      .on('mouseout', function() {
-        tooltip.style('opacity', 0);
+        // Update sidebar content
+        populateNodeDetails(d);
       });
 
     // Add node labels (name)
