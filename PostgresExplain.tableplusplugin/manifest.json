@@ -2,9 +2,9 @@
   "name": "PostgreSQL Visual Explain",
   "identifier": "com.tinyapp.TablePlus.PostgresExplain",
   "version": "1.0.0",
-  "detail": "Execute PostgreSQL EXPLAIN queries and visualize with pev2",
+  "detail": "Execute PostgreSQL EXPLAIN queries and visualize the query plans directly within TablePlus.",
   "author": "TablePlus",
-  "authorEmail": "neil@example.com",
+  "authorEmail": "neil.a.wadden@mun.ca",
   "site": "https://github.com/tableplus/postgres-explain",
   "scripts": [
     {

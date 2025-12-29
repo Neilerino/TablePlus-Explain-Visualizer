@@ -1,0 +1,59 @@
+/**
+ * Details Panel Styles
+ * Node details in right sidebar
+ */
+
+.empty-state {
+  text-align: center;
+  padding: 40px var(--spacing-xl);
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.detail-section {
+  margin-bottom: var(--spacing-xl);
+}
+
+.detail-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-cyan);
+  text-transform: uppercase;
+  margin-bottom: var(--spacing-sm);
+  letter-spacing: 0.5px;
+}
+
+.detail-title {
+  font-size: 16px;
+  color: var(--accent-green);
+  margin-bottom: var(--spacing-md);
+  font-weight: 600;
+}
+
+.detail-item {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 12px;
+}
+
+.detail-item:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  color: var(--text-secondary);
+  margin-bottom: 2px;
+  display: inline-block;
+  min-width: 120px;
+  font-weight: 500;
+}
+
+.detail-value {
+  color: var(--text-bright);
+  word-wrap: break-word;
+}
+
+.detail-warning {
+  color: var(--accent-orange);
+  font-weight: 600;
+}

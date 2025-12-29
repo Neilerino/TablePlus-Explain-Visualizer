@@ -1,0 +1,90 @@
+/**
+ * Tree Visualization Styles
+ * D3.js tree nodes and links
+ */
+
+/* NODE RECTANGLES */
+.node rect {
+  fill: var(--node-default-fill);
+  stroke: var(--node-default-stroke);
+  stroke-width: 2px;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  rx: var(--radius-md);
+  ry: var(--radius-md);
+}
+
+.node.expensive rect {
+  stroke: var(--node-expensive-stroke);
+  fill: var(--node-expensive-fill);
+}
+
+.node.moderate rect {
+  stroke: var(--node-moderate-stroke);
+  fill: var(--node-moderate-fill);
+}
+
+.node.warning rect {
+  stroke: var(--node-warning-stroke);
+  fill: var(--node-warning-fill);
+}
+
+.node rect.selected {
+  stroke: var(--node-selected-stroke);
+  stroke-width: 3px;
+  filter: drop-shadow(var(--shadow-glow-accent));
+}
+
+.node:hover rect:not(.selected) {
+  stroke-width: 3px;
+  filter: drop-shadow(var(--shadow-glow));
+}
+
+/* NODE TEXT */
+.node text {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  cursor: pointer;
+  pointer-events: none;
+}
+
+.node .node-type {
+  font-weight: 600;
+  font-size: 13px;
+  fill: var(--text-primary);
+}
+
+.node .node-alias {
+  font-size: 10px;
+  fill: var(--text-secondary);
+  font-style: italic;
+}
+
+.node .node-metric {
+  font-size: 10px;
+  fill: var(--text-muted);
+}
+
+.node .node-metric-label {
+  fill: var(--text-tertiary);
+}
+
+.node .node-metric-value {
+  fill: var(--text-primary);
+  font-weight: 500;
+}
+
+/* LINKS (EDGES) */
+.link {
+  fill: none;
+  stroke: var(--border-color);
+  stroke-width: 2px;
+}
+
+.edge-label {
+  font-size: 9px;
+  fill: var(--accent-cyan);
+  font-family: 'Monaco', monospace;
+  background: var(--bg-primary);
+  dominant-baseline: middle;
+  text-anchor: start;
+}

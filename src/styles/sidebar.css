@@ -1,0 +1,166 @@
+/**
+ * Sidebar Styles
+ * Left and right sidebar panels
+ */
+
+.sidebar {
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: width var(--transition-normal) ease, min-width var(--transition-normal) ease;
+  position: relative;
+}
+
+.sidebar.collapsed {
+  width: 0 !important;
+  min-width: 0 !important;
+  border: none;
+  overflow: visible;
+}
+
+.sidebar.collapsed .sidebar-content {
+  display: none;
+}
+
+.sidebar.collapsed .sidebar-header {
+  background: transparent;
+  border: none;
+  padding: 0;
+  min-height: 0;
+}
+
+/* LEFT SIDEBAR */
+.left-sidebar {
+  width: 350px;
+  min-width: 250px;
+  max-width: 600px;
+}
+
+/* RIGHT SIDEBAR */
+.right-sidebar {
+  width: 400px;
+  min-width: 300px;
+  max-width: 700px;
+  border-right: none;
+  border-left: 1px solid var(--border-color);
+}
+
+/* SIDEBAR HEADER */
+.sidebar-header {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+  min-height: 44px;
+}
+
+.sidebar.collapsed .sidebar-header {
+  border-bottom: none;
+}
+
+/* COLLAPSE BUTTON */
+.collapse-btn {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 6px var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  min-width: 28px;
+  position: relative;
+  z-index: 10;
+  transition: background var(--transition-fast);
+}
+
+.collapse-btn:hover {
+  background: var(--border-color);
+}
+
+/* Keep left collapse button visible when sidebar is collapsed */
+.left-sidebar.collapsed .collapse-btn {
+  position: fixed;
+  left: var(--spacing-md);
+  top: 50vh;
+  transform: translateY(-50%);
+  box-shadow: var(--shadow-sm);
+  z-index: 1000;
+}
+
+/* SIDEBAR CONTENT */
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--spacing-lg);
+}
+
+/* QUERY PANEL */
+.query-panel {
+  margin-bottom: var(--spacing-xl);
+}
+
+.query-panel h4,
+.stats-panel h4 {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  margin-bottom: var(--spacing-sm);
+}
+
+.query-text {
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 12px;
+  background: var(--bg-code);
+  padding: 0;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  overflow-x: auto;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.query-text code {
+  display: block;
+  padding: var(--spacing-md);
+  line-height: 1.5;
+  white-space: pre;
+  background: transparent;
+}
+
+/* STATISTICS PANEL */
+.stats-panel {
+  margin-top: var(--spacing-xl);
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-md);
+  margin-bottom: 4px;
+  background: var(--bg-primary);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 12px;
+  color: var(--accent-cyan);
+  font-weight: 600;
+}

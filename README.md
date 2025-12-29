@@ -4,7 +4,7 @@ A TablePlus plugin that visualizes PostgreSQL EXPLAIN query plans with an intera
 
 ## Features
 
-### 🎯 Interactive Visualization
+### Interactive Visualization
 
 - **D3.js tree layout** showing the complete query execution plan hierarchy
 - **Color-coded nodes** indicating cost levels (green/orange/red)
@@ -12,7 +12,7 @@ A TablePlus plugin that visualizes PostgreSQL EXPLAIN query plans with an intera
 - **Join conditions displayed on edges** between nodes
 - **Performance warnings** for estimation mismatches
 
-### 📊 Detailed Metrics
+### Detailed Metrics
 
 Each node shows:
 
@@ -29,7 +29,7 @@ Each node shows:
 The visualizer highlights:
 
 - **Expensive operations** (red nodes for high cost)
-- **Estimation problems** (purple nodes when planner estimates are off by >50%)
+- **Estimation problems** (Flags nodes when planner estimates are off by >50%)
 - **Seq scans** on large tables
 - **Sort operations** with memory usage
 - **Join conditions** and filter predicates
@@ -37,129 +37,18 @@ The visualizer highlights:
 
 ## Installation
 
-1. **Download or clone this repository**
-
-   ```bash
-   git clone <repository-url>
-   ```
-
-2. **Install the plugin**
-
-   - Double-click `PostgresExplain.tableplusplugin`
-   - Or manually copy to: `~/Library/Application Support/com.tinyapp.TablePlus/Plugins/`
-
-3. **Reload TablePlus**
-   - Restart TablePlus or reload plugins
-
-## Usage
-
-1. **Connect to a PostgreSQL database** in TablePlus
-
-2. **Write or select a SQL query**
-
-   ```sql
-   SELECT u.email, COUNT(o.id) as order_count
-   FROM users u
-   LEFT JOIN orders o ON u.id = o.user_id
-   GROUP BY u.email
-   ORDER BY order_count DESC;
-   ```
-
-3. **Run EXPLAIN**
-
-   - **Menu:** Plugins → Run Explain
-
-4. **Explore the visualization**
-   - Hover over nodes to see detailed metrics
-   - Examine join conditions on the connecting edges
-   - Look for purple warning nodes (estimation problems)
-   - Check red nodes for expensive operations
-
-## Understanding the Visualization
-
-### Node Colors
-
-- 🟢 **Green:** Low cost (< 100)
-- 🟠 **Orange:** Moderate cost (100-1,000)
-- 🔴 **Red:** High cost (> 1,000)
-- 🟣 **Purple:** Estimation warning (planner was off by >50%)
-
-### Node Information
-
-**Displayed on node:**
-
-- Node type (e.g., "Seq Scan", "Hash Join")
-- Strategy/Table name (e.g., "Hashed", "users")
-- Cost and row count
-- Execution time (for expensive nodes)
-- Warning indicator if estimates are off
-
-**Tooltip sections:**
-
-1. **Table Info:** Schema, table name, alias, index used
-2. **Cost & Timing:** Total cost, startup cost, actual execution time
-3. **Rows:** Planned vs actual rows, loops, estimation accuracy
-4. **Join Conditions:** Hash conditions, join filters, uniqueness
-5. **Sort Info:** Sort keys, method, memory usage
-6. **Aggregate Info:** Strategy, group keys, hash buckets, memory
-7. **Buffers:** Cache hits, disk reads, hit rate
-8. **Filters:** Any filter conditions applied
-
-### Edge Labels
-
-Connecting lines between nodes show:
-
-- **Join conditions** (e.g., `(o.user_id = u.id)`)
-- **Parent relationships** (Outer, Inner)
-- **Data flow direction** (top to bottom in the tree)
-
-## Performance Optimization Tips
-
-### Look for these warning signs:
-
-1. **Purple "⚠ Est. Off" nodes**
-
-   - Planner's row estimates are way off
-   - May indicate outdated statistics → Run `ANALYZE`
-   - Could lead to poor join strategy choices
-
-2. **Red high-cost nodes**
-
-   - Expensive operations that take most of the time
-   - Consider adding indexes
-   - Review join conditions and filters
-
-3. **Seq Scan on large tables**
-
-   - Scanning entire table instead of using index
-   - Add appropriate indexes for WHERE/JOIN conditions
-
-4. **Disk Reads in buffer stats**
-
-   - Low cache hit rate
-   - Data not in memory
-   - Consider increasing `shared_buffers` or query less data
-
-5. **High memory usage in sorts**
-
-   - Sort operations spilling to disk
-   - Consider increasing `work_mem`
-   - Or optimize query to reduce sort size
-
-6. **Nested Loop with high row count**
-   - Can be very expensive for large datasets
-   - Review join conditions
-   - Consider restructuring query
-
-Then try the commented queries at the bottom of the file to see various plan structures.
-
-## Technical Details
-
-### Technology Stack
-
-- **Language:** Plain JavaScript (no build process required)
-- **Visualization:** D3.js v7 (loaded from CDN)
-- **Rendering:** TablePlus's built-in HTML viewer (`context.loadHTML()`)
+```bash
+# Step 1: Clone the repo:
+git clone git@github.com:Neilerino/TablePlus-Explain-Visualizer.git
+# Step 2: Go into project directory:
+cd TablePlus-Explain-Visualizer
+# Step 3: Install packages
+npm i
+# Step 4: Build dist for the package
+npm run build
+# Step 5: Add to TablePlus
+open PostgresExplain.tableplusplugin
+```
 
 ### How It Works
 
@@ -169,11 +58,6 @@ Then try the commented queries at the bottom of the file to see various plan str
 4. Converts the plan tree to D3.js hierarchy format
 5. Generates self-contained HTML with embedded visualization
 6. Displays using TablePlus's HTML viewer
-
-### Files
-
-- `manifest.json` - Plugin configuration for TablePlus
-- `explain.js` - Main plugin code with visualization generator
 
 ## Troubleshooting
 
@@ -190,15 +74,7 @@ Then try the commented queries at the bottom of the file to see various plan str
 
 ### Visualization appears blank
 
-- Check the browser console in TablePlus (if accessible)
-- Ensure the query actually executed successfully
-- Try a simpler query first to test
-
-### Estimation warnings everywhere
-
-- Run `ANALYZE` on your tables to update statistics
-- Some warnings are expected for small tables or complex queries
-- Focus on warnings on expensive nodes
+- Ensure the query actually executed successfully (Query should appear with EXPLAIN ANALYZE ... in the TablePlus Query console).
 
 ## Contributing
 
@@ -218,6 +94,10 @@ MIT License - feel free to modify and distribute
 - Built for [TablePlus](https://tableplus.com/)
 - Visualization powered by [D3.js](https://d3js.org/)
 
----
+## Screenshots
 
-**Happy optimizing! 🚀**
+![View when you open the explainer](images/screenshot-one.png)
+
+![View showing node statistics](images/screenshot-two.png)
+
+![Showing where the button is to run an explain plan](images/screenshot-three.png)

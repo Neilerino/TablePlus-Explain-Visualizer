@@ -1,0 +1,38 @@
+{
+  "name": "tableplus-postgres-explain",
+  "version": "2.0.0",
+  "description": "PostgreSQL EXPLAIN Visualizer for TablePlus",
+  "type": "module",
+  "main": "dist/explain.js",
+  "scripts": {
+    "build": "npm run bundle-libs && webpack --mode production --config webpack.config.cjs",
+    "dev": "webpack --mode development --watch --config webpack.config.cjs",
+    "clean": "rm -rf dist/*",
+    "bundle-libs": "node bundle-libs.js",
+    "prebuild": "npm run clean",
+    "postbuild": "npm run copy-to-plugin",
+    "copy-to-plugin": "cp dist/explain.js PostgresExplain.tableplusplugin/",
+    "test-browser": "node test-browser.js"
+  },
+  "keywords": [
+    "tableplus",
+    "postgresql",
+    "explain",
+    "visualization",
+    "d3"
+  ],
+  "author": "TablePlus",
+  "license": "MIT",
+  "devDependencies": {
+    "css-loader": "^6.8.1",
+    "esbuild": "^0.27.2",
+    "mini-css-extract-plugin": "^2.7.6",
+    "raw-loader": "^4.0.2",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "d3": "^7.9.0",
+    "highlight.js": "^11.11.1"
+  }
+}
