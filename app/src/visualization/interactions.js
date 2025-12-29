@@ -1,9 +1,13 @@
 /**
- * Generate interaction handlers code
- * @returns {string} JavaScript code for interactions
+ * Setup node click interactions
+ * @param {Object} d3 - D3 library
+ * @param {Object} appState - Application state object
+ * @param {Function} toggleSidebar - Function to toggle sidebar
+ * @param {Function} populateNodeDetails - Function to populate node details panel
+ * @param {Function} saveState - Function to save app state
+ * @returns {Function} onNodeClick handler
  */
-export function getInteractionsCode() {
-  return `
+export function setupNodeClickHandler(d3, appState, toggleSidebar, populateNodeDetails, saveState) {
   // Node click handler
   function onNodeClick(event, d) {
     event.stopPropagation();
@@ -39,5 +43,6 @@ export function getInteractionsCode() {
     // Update sidebar content
     populateNodeDetails(d);
   }
-  `;
+
+  return onNodeClick;
 }

@@ -5,12 +5,14 @@
   "type": "module",
   "main": "dist/explain.js",
   "scripts": {
-    "build": "npm run bundle-libs && webpack --mode production --config webpack.config.cjs",
+    "build": "npm run build:plugin && npm run build:app",
+    "build:plugin": "webpack --mode production --config webpack.config.cjs",
+    "build:app": "webpack --mode production --config app.webpack.config.cjs",
     "dev": "webpack --mode development --watch --config webpack.config.cjs",
-    "clean": "rm -rf dist/*",
-    "bundle-libs": "node bundle-libs.js",
+    "dev:app": "webpack serve --config app.webpack.config.cjs",
+    "clean": "rm -rf dist/* PostgresExplain.tableplusplugin/app/dist/*",
     "prebuild": "npm run clean",
-    "postbuild": "npm run copy-to-plugin",
+    "postbuild:plugin": "cp dist/explain.js PostgresExplain.tableplusplugin/",
     "copy-to-plugin": "cp dist/explain.js PostgresExplain.tableplusplugin/",
     "test-browser": "node test-browser.js"
   },
@@ -24,12 +26,15 @@
   "author": "TablePlus",
   "license": "MIT",
   "devDependencies": {
-    "css-loader": "^6.8.1",
+    "css-loader": "^6.11.0",
     "esbuild": "^0.27.2",
-    "mini-css-extract-plugin": "^2.7.6",
+    "html-webpack-plugin": "^5.6.5",
+    "mini-css-extract-plugin": "^2.9.4",
     "raw-loader": "^4.0.2",
+    "style-loader": "^4.0.0",
     "webpack": "^5.89.0",
-    "webpack-cli": "^5.1.4"
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^5.2.2"
   },
   "dependencies": {
     "d3": "^7.9.0",

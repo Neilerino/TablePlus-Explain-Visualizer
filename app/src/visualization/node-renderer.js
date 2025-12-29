@@ -1,9 +1,13 @@
 /**
- * Generate node rendering code
- * @returns {string} JavaScript code for node rendering
+ * Render nodes in the tree visualization
+ * @param {Object} d3 - D3 library
+ * @param {Object} svg - D3 selection of main SVG group
+ * @param {Object} treeLayout - D3 tree layout with data
+ * @param {number} nodeWidth - Width of nodes
+ * @param {number} nodeHeight - Height of nodes
+ * @param {Function} onNodeClick - Click handler for nodes
  */
-export function getNodeRendererCode() {
-  return `
+export function renderNodes(d3, svg, treeLayout, nodeWidth, nodeHeight, onNodeClick) {
   // Draw nodes
   const nodes = svg.selectAll('.node')
     .data(treeLayout.descendants())
@@ -91,5 +95,4 @@ export function getNodeRendererCode() {
     .attr('class', 'node-metric')
     .style('fill', '#ff9800')
     .text('⚠');
-  `;
 }

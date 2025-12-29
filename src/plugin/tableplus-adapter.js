@@ -1,9 +1,12 @@
 import { handleError } from './error-handler.js';
 
+const PLUGIN_IDENTIFER = 'com.tinyapp.TablePlus.PostgresExplain.tableplusplugin';
+
 
 export class TablePlusAdapter {
   constructor(context) {
     this.context = context;
+    this.application = Application;
   }
 
   getQueryEditor() {
@@ -52,6 +55,30 @@ export class TablePlusAdapter {
 
   displayHTML(html) {
     this.context.loadHTML(html);
+  }
+
+
+  workingPath() {
+    return Application.pluginRootPath()  + `/${PLUGIN_IDENTIFER}` ;
+  }
+
+  /**
+   * Load HTML file into webView
+   * @param {string} htmlPath - Path to HTML file
+   * @returns {object} webView object
+   */
+  loadWebView(htmlPath) {
+    return this.context.loadFile(`${this.workingPath()}/${htmlPath}`, null);
+  }
+
+  /**
+   * Pass data to webView via JavaScript evaluation
+   * @param {object} webView - WebView object
+   * @param {object} data - Data to pass
+   */
+  sendDataToWebView(webView, data) {
+    const jsonData = JSON.stringify(data);
+    webView.evaluate(`window.ExplainViz.init(${jsonData})`);
   }
 
   showAlert(title, message) {

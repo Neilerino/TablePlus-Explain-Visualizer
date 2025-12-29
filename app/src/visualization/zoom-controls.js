@@ -1,9 +1,12 @@
 /**
- * Generate zoom controls code
- * @returns {string} JavaScript code for zoom controls
+ * Setup zoom controls for the D3 visualization
+ * @param {Object} d3 - D3 library
+ * @param {Object} svgContainer - D3 selection of SVG container
+ * @param {Object} svg - D3 selection of main SVG group
+ * @param {Object} margin - Margin object with top, right, bottom, left properties
+ * @returns {Object} zoom behavior object
  */
-export function getZoomControlsCode() {
-  return `
+export function setupZoomControls(d3, svgContainer, svg, margin) {
   // Set up zoom behavior
   const zoom = d3.zoom()
     .scaleExtent([0.1, 4]) // Min zoom: 10%, Max zoom: 400%
@@ -26,5 +29,6 @@ export function getZoomControlsCode() {
   document.getElementById('zoom-reset').addEventListener('click', () => {
     svgContainer.transition().duration(300).call(zoom.transform, d3.zoomIdentity.translate(margin.left, margin.top));
   });
-  `;
+
+  return zoom;
 }

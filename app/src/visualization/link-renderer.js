@@ -1,9 +1,11 @@
 /**
- * Generate link rendering code
- * @returns {string} JavaScript code for link rendering
+ * Render links (edges) between nodes in the tree
+ * @param {Object} d3 - D3 library
+ * @param {Object} svg - D3 selection of main SVG group
+ * @param {Object} treeLayout - D3 tree layout with data
+ * @param {number} nodeHeight - Height of nodes
  */
-export function getLinkRendererCode() {
-  return `
+export function renderLinks(d3, svg, treeLayout, nodeHeight) {
   // Draw links (edges connecting nodes)
   const links = svg.selectAll('.link')
     .data(treeLayout.links())
@@ -38,5 +40,4 @@ export function getLinkRendererCode() {
               d.target.data.edgeLabel);
     }
   });
-  `;
 }

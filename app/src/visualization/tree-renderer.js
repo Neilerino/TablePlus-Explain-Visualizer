@@ -1,14 +1,21 @@
-import { getZoomControlsCode } from './zoom-controls.js';
-import { getInteractionsCode } from './interactions.js';
-import { getLinkRendererCode } from './link-renderer.js';
-import { getNodeRendererCode } from './node-renderer.js';
+/**
+ * Main D3 tree visualization renderer
+ */
+import { renderLinks } from './link-renderer.js';
+import { renderNodes } from './node-renderer.js';
+import { setupZoomControls } from './zoom-controls.js';
+import { setupNodeClickHandler } from './interactions.js';
 
 /**
- * Generate complete D3 tree visualization code
- * @returns {string} JavaScript code for D3 tree rendering
+ * Render the D3 tree visualization
+ * @param {Object} d3 - D3 library
+ * @param {Object} treeData - Hierarchical tree data
+ * @param {Object} appState - Application state
+ * @param {Function} toggleSidebar - Function to toggle sidebar
+ * @param {Function} populateNodeDetails - Function to populate node details
+ * @param {Function} saveState - Function to save state
  */
-export function getTreeVisualizationCode() {
-  return `
+export function renderTree(d3, treeData, appState, toggleSidebar, populateNodeDetails, saveState) {
   // Set up dimensions for vertical tree
   const margin = {top: 40, right: 40, bottom: 40, left: 40};
   const container = document.getElementById('tree-container');
@@ -39,12 +46,15 @@ export function getTreeVisualizationCode() {
   const root = d3.hierarchy(treeData);
   const treeLayout = tree(root);
 
-  ${getInteractionsCode()}
+  // Setup node click handler
+  const onNodeClick = setupNodeClickHandler(d3, appState, toggleSidebar, populateNodeDetails, saveState);
 
-  ${getLinkRendererCode()}
+  // Render links
+  renderLinks(d3, svg, treeLayout, nodeHeight);
 
-  ${getNodeRendererCode()}
+  // Render nodes
+  renderNodes(d3, svg, treeLayout, nodeWidth, nodeHeight, onNodeClick);
 
-  ${getZoomControlsCode()}
-  `;
+  // Setup zoom controls
+  setupZoomControls(d3, svgContainer, svg, margin);
 }
