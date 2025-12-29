@@ -1,9 +1,4 @@
 /**
- * Node renderer module
- * Generates code for drawing and styling nodes
- */
-
-/**
  * Generate node rendering code
  * @returns {string} JavaScript code for node rendering
  */

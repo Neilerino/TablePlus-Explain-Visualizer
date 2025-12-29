@@ -1,8 +1,3 @@
-/**
- * HTML head section
- * Generates <head> with meta tags and embedded libraries
- */
-
 // Import bundled libraries as strings using raw-loader
 import d3Code from '../../libs/d3.bundled.js';
 import hljsCode from '../../libs/hljs.bundled.js';

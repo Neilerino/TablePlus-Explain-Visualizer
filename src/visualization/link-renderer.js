@@ -1,9 +1,4 @@
 /**
- * Link renderer module
- * Generates code for drawing edges between nodes
- */
-
-/**
  * Generate link rendering code
  * @returns {string} JavaScript code for link rendering
  */

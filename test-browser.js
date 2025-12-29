@@ -1,8 +1,3 @@
-/**
- * Browser test adapter
- * Generates standalone HTML file for debugging in Chrome
- */
-
 import { transformToD3Tree } from './src/core/transformer/tree-transformer.js';
 import { renderLayout } from './src/ui/sections/layout.js';
 import { renderScripts } from './src/ui/sections/scripts.js';
@@ -10,7 +5,6 @@ import { escapeJson } from './src/utils/escape.js';
 import { getTreeVisualizationCode } from './src/visualization/tree-renderer.js';
 import { readFileSync, writeFileSync } from 'fs';
 
-// Mock EXPLAIN plan data
 const mockPlanData = {
   "Plan": {
     "Node Type": "Aggregate",
@@ -183,23 +177,18 @@ ORDER BY total_orders DESC`;
 
 console.log('Generating test HTML...');
 
-// Transform plan to D3 tree
 const treeData = transformToD3Tree(mockPlanData);
 console.log('Tree data generated:', treeData);
 
-// Get visualization code
 const visualizationCode = getTreeVisualizationCode();
 console.log('Visualization code length:', visualizationCode.length);
 
-// Read CSS and bundled libraries manually
 const styles = readFileSync('./src/styles/main.css', 'utf-8');
 const d3Code = readFileSync('./src/libs/d3.bundled.js', 'utf-8');
 const hljsCode = readFileSync('./src/libs/hljs.bundled.js', 'utf-8');
 
-// Escape tree data for safe embedding
 const treeJson = escapeJson(treeData);
 
-// Build HTML manually (can't use renderHead due to import issues in Node)
 const head = `
 <head>
   <meta charset="UTF-8">
@@ -219,7 +208,6 @@ ${renderLayout(mockQuery, mockPlanData)}
 ${renderScripts(treeJson, visualizationCode)}
 </html>`;
 
-// Write to file
 writeFileSync('test-output.html', html);
 console.log('✅ Test HTML written to test-output.html');
 console.log('📊 File size:', Math.round(html.length / 1024), 'KB');

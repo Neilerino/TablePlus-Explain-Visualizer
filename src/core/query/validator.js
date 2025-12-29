@@ -1,9 +1,4 @@
 /**
- * Query validation module
- * Validates SQL queries for EXPLAIN compatibility
- */
-
-/**
  * Validate if a query is compatible with EXPLAIN
  * @param {string} query - SQL query to validate
  * @returns {{valid: boolean, error?: string}} Validation result
@@ -16,7 +11,6 @@ export function validateQuery(query) {
     };
   }
 
-  // Check if already has EXPLAIN
   if (/^\s*EXPLAIN/i.test(query)) {
     return {
       valid: false,
@@ -24,7 +18,6 @@ export function validateQuery(query) {
     };
   }
 
-  // Validate query type - only these work with EXPLAIN
   if (!/^\s*(SELECT|INSERT|UPDATE|DELETE|WITH)/i.test(query)) {
     return {
       valid: false,

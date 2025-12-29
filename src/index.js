@@ -1,8 +1,3 @@
-/**
- * TablePlus PostgreSQL EXPLAIN Visualizer
- * Main entry point for webpack bundling
- */
-
 import { runExplain } from './plugin/plugin-entry.js';
 
 // Export to global scope for TablePlus

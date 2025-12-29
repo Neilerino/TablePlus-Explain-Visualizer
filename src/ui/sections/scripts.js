@@ -1,8 +1,3 @@
-/**
- * Scripts section
- * Generates embedded JavaScript for the visualization
- */
-
 import { getNodeDetailsPopulatorCode } from '../components/node-details.js';
 
 /**

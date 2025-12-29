@@ -1,9 +1,4 @@
 /**
- * Zoom controls module
- * Generates zoom/pan control code for D3 visualization
- */
-
-/**
  * Generate zoom controls code
  * @returns {string} JavaScript code for zoom controls
  */

@@ -1,9 +1,4 @@
 /**
- * Interaction handlers module
- * Generates event handler code for node interactions
- */
-
-/**
  * Generate interaction handlers code
  * @returns {string} JavaScript code for interactions
  */

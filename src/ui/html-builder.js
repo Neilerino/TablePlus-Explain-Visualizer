@@ -1,8 +1,3 @@
-/**
- * HTML Builder
- * Main module for assembling the complete HTML document
- */
-
 import { renderHead } from './sections/head.js';
 import { renderLayout } from './sections/layout.js';
 import { renderScripts } from './sections/scripts.js';

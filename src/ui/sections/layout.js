@@ -1,8 +1,3 @@
-/**
- * Main layout section
- * Generates the 3-column layout structure
- */
-
 import { renderSidebar } from '../components/sidebar.js';
 import { renderQueryPanel } from '../components/query-panel.js';
 import { renderStatsPanel } from '../components/stats-panel.js';

@@ -1,15 +1,5 @@
-/**
- * Node enrichment module
- * Enriches plan nodes with computed properties and formatted data
- */
-
 import { calculateEstimationAccuracy, isEstimationOff } from './metrics.js';
 
-/**
- * Enrich a plan node with computed properties
- * @param {Object} node - Raw plan node from PostgreSQL
- * @returns {Object} Enriched node with all properties
- */
 export function enrichNode(node) {
   const planRows = node['Plan Rows'] || 0;
   const actualRows = node['Actual Rows'] || 0;
@@ -17,9 +7,8 @@ export function enrichNode(node) {
 
   return {
     name: node['Node Type'] || 'Unknown',
-    rawNode: node, // Keep full node for reference
+    rawNode: node,
     details: {
-      // Basic info
       cost: node['Total Cost'] ? node['Total Cost'].toFixed(2) : 'N/A',
       startupCost: node['Startup Cost'] ? node['Startup Cost'].toFixed(2) : 'N/A',
       planRows: node['Plan Rows'] || 'N/A',

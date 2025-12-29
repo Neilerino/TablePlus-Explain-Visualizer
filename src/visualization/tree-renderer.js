@@ -1,8 +1,3 @@
-/**
- * Tree renderer module
- * Main D3 tree visualization setup and rendering
- */
-
 import { getZoomControlsCode } from './zoom-controls.js';
 import { getInteractionsCode } from './interactions.js';
 import { getLinkRendererCode } from './link-renderer.js';

@@ -1,9 +1,4 @@
 /**
- * EXPLAIN query builder module
- * Constructs PostgreSQL EXPLAIN statements
- */
-
-/**
  * Build an EXPLAIN query with analysis options
  * @param {string} query - Original SQL query
  * @param {Object} options - EXPLAIN options

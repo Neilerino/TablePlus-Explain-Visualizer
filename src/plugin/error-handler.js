@@ -1,11 +1,3 @@
-/**
- * Error handler module
- * User-facing error messages for TablePlus alerts
- */
-
-/**
- * Error message definitions
- */
 const ERROR_MESSAGES = {
   NO_QUERY_EDITOR: {
     title: 'No Query Editor',
@@ -45,12 +37,6 @@ const ERROR_MESSAGES = {
   }
 };
 
-/**
- * Handle error and show alert to user
- * @param {string} errorCode - Error code from ERROR_MESSAGES
- * @param {Object} context - TablePlus context
- * @param {string} additionalMessage - Optional additional message
- */
 export function handleError(errorCode, context, additionalMessage = '') {
   const error = ERROR_MESSAGES[errorCode] || {
     title: 'Unexpected Error',
