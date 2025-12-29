@@ -251,11 +251,22 @@ function generateExplainHTML(originalQuery, planData) {
       flex-direction: column;
       overflow: hidden;
       transition: width 0.2s ease, min-width 0.2s ease;
+      position: relative;
     }
     .sidebar.collapsed {
       width: 0 !important;
       min-width: 0 !important;
       border: none;
+      overflow: visible;
+    }
+    .sidebar.collapsed .sidebar-content {
+      display: none;
+    }
+    .sidebar.collapsed .sidebar-header {
+      background: transparent;
+      border: none;
+      padding: 0;
+      min-height: 0;
     }
     .left-sidebar {
       width: 350px;
@@ -270,34 +281,46 @@ function generateExplainHTML(originalQuery, planData) {
       border-left: 1px solid #3e3e42;
     }
     .sidebar-header {
+      position: relative;
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-end;
       align-items: center;
       padding: 12px 16px;
       background: #2d2d30;
       border-bottom: 1px solid #3e3e42;
       flex-shrink: 0;
+      min-height: 44px;
     }
-    .sidebar-header h3 {
-      font-size: 13px;
-      font-weight: 600;
-      color: #cccccc;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+    .sidebar.collapsed .sidebar-header {
+      border-bottom: none;
     }
     .collapse-btn {
-      background: none;
-      border: none;
+      background: #2d2d30;
+      border: 1px solid #3e3e42;
       color: #cccccc;
       cursor: pointer;
-      padding: 4px;
+      padding: 6px 8px;
       display: flex;
       align-items: center;
+      justify-content: center;
       border-radius: 3px;
-      font-size: 18px;
+      font-size: 14px;
+      min-width: 28px;
+      position: relative;
+      z-index: 10;
+      transition: background 0.15s;
     }
     .collapse-btn:hover {
       background: #3e3e42;
+    }
+    /* Keep left collapse button visible when sidebar is collapsed */
+    .left-sidebar.collapsed .collapse-btn {
+      position: fixed;
+      left: 12px;
+      top: 50vh;
+      transform: translateY(-50%);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      z-index: 1000;
     }
     .sidebar-content {
       flex: 1;
@@ -340,21 +363,6 @@ function generateExplainHTML(originalQuery, planData) {
       overflow: hidden;
       display: flex;
       flex-direction: column;
-    }
-    .main-header {
-      padding: 20px;
-      background: #252526;
-      border-bottom: 1px solid #3e3e42;
-      flex-shrink: 0;
-    }
-    .main-header h1 {
-      font-size: 20px;
-      color: #cccccc;
-      margin-bottom: 4px;
-    }
-    .metadata {
-      font-size: 12px;
-      color: #858585;
     }
     #tree-container {
       flex: 1;
@@ -571,7 +579,6 @@ function generateExplainHTML(originalQuery, planData) {
     <!-- LEFT SIDEBAR -->
     <div class="sidebar left-sidebar" id="leftSidebar">
       <div class="sidebar-header">
-        <h3>Query & Statistics</h3>
         <button class="collapse-btn" id="leftCollapseBtn" title="Toggle sidebar">◀</button>
       </div>
 
@@ -610,10 +617,6 @@ function generateExplainHTML(originalQuery, planData) {
 
     <!-- MAIN CONTENT -->
     <div class="main-content">
-      <div class="main-header">
-        <h1>PostgreSQL EXPLAIN Visualization</h1>
-        <div class="metadata">Generated at ${new Date().toLocaleString()}</div>
-      </div>
       <div id="tree-container">
         <div class="zoom-controls">
           <button class="zoom-btn" id="zoom-in" title="Zoom In">+</button>
@@ -629,7 +632,6 @@ function generateExplainHTML(originalQuery, planData) {
     <!-- RIGHT SIDEBAR -->
     <div class="sidebar right-sidebar collapsed" id="rightSidebar">
       <div class="sidebar-header">
-        <h3>Node Details</h3>
         <button class="collapse-btn" id="rightCollapseBtn" title="Close sidebar">✕</button>
       </div>
 
