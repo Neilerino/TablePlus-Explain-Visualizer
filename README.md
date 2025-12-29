@@ -24,7 +24,7 @@ Each node shows:
 - **Memory usage** for sorts and aggregates
 - **Buffer statistics** (cache hits vs disk reads)
 
-### ⚠️ Performance Debugging
+### Performance Debugging
 
 The visualizer highlights:
 
@@ -34,6 +34,14 @@ The visualizer highlights:
 - **Sort operations** with memory usage
 - **Join conditions** and filter predicates
 - **Cache effectiveness** (buffer hit rates)
+
+## Screenshots
+
+![View when you open the explainer](images/screenshot-one.png)
+
+![View showing node statistics](images/screenshot-two.png)
+
+![Showing where the button is to run an explain plan](images/screenshot-three.png)
 
 ## Installation
 
@@ -59,23 +67,6 @@ open PostgresExplain.tableplusplugin
 5. Generates self-contained HTML with embedded visualization
 6. Displays using TablePlus's HTML viewer
 
-## Troubleshooting
-
-### Plugin doesn't appear in menu
-
-- Make sure you're connected to a **PostgreSQL** database (not MySQL, SQLite, etc.)
-- Try restarting TablePlus
-- Check that the plugin is installed in the correct directory
-
-### "Invalid Query Type" error
-
-- The plugin only works with `SELECT`, `INSERT`, `UPDATE`, `DELETE`, and `WITH` queries
-- Remove any existing `EXPLAIN` from your query
-
-### Visualization appears blank
-
-- Ensure the query actually executed successfully (Query should appear with EXPLAIN ANALYZE ... in the TablePlus Query console).
-
 ## Contributing
 
 Feel free to submit issues or pull requests for:
@@ -93,11 +84,3 @@ MIT License - feel free to modify and distribute
 
 - Built for [TablePlus](https://tableplus.com/)
 - Visualization powered by [D3.js](https://d3js.org/)
-
-## Screenshots
-
-![View when you open the explainer](images/screenshot-one.png)
-
-![View showing node statistics](images/screenshot-two.png)
-
-![Showing where the button is to run an explain plan](images/screenshot-three.png)
