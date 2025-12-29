@@ -227,6 +227,9 @@ function generateExplainHTML(originalQuery, planData) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PostgreSQL EXPLAIN Visualization (Enhanced)</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/sql.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -405,16 +408,20 @@ function generateExplainHTML(originalQuery, planData) {
     .query-text {
       font-family: 'Monaco', 'Courier New', monospace;
       font-size: 12px;
-      background: #1e1e1e;
-      color: #d4d4d4;
-      padding: 12px;
+      background: #282c34;
+      padding: 0;
       border-radius: 4px;
       border: 1px solid #3e3e42;
       overflow-x: auto;
-      white-space: pre;
-      line-height: 1.5;
       max-height: 300px;
       overflow-y: auto;
+    }
+    .query-text code {
+      display: block;
+      padding: 12px;
+      line-height: 1.5;
+      white-space: pre;
+      background: transparent;
     }
 
     /* STATISTICS PANEL */
@@ -572,7 +579,7 @@ function generateExplainHTML(originalQuery, planData) {
         <!-- Query Section -->
         <div class="query-panel">
           <h4>Original Query</h4>
-          <pre class="query-text">${escapedQuery}</pre>
+          <pre class="query-text"><code class="language-sql">${escapedQuery}</code></pre>
         </div>
 
         <!-- Statistics Section -->
@@ -1002,11 +1009,18 @@ function generateExplainHTML(originalQuery, planData) {
       if (d.data.details.output) {
         content += '<div class="detail-section">';
         content += '<div class="detail-section-title">Output</div>';
-        content += '<div class="detail-item"><span class="detail-value" style="word-break: break-word;">' + d.data.details.output + '</span></div>';
+        content += '<div class="detail-item"><pre style="margin: 0; background: #282c34; padding: 8px; border-radius: 4px; overflow-x: auto;"><code class="language-sql" style="font-size: 11px;">' + d.data.details.output + '</code></pre></div>';
         content += '</div>';
       }
 
       document.getElementById('nodeDetails').innerHTML = content;
+
+      // Apply syntax highlighting to the output field
+      if (d.data.details.output && typeof hljs !== 'undefined') {
+        document.querySelectorAll('#nodeDetails code.language-sql').forEach((block) => {
+          hljs.highlightElement(block);
+        });
+      }
     }
 
     // Set up dimensions for vertical tree
@@ -1218,6 +1232,11 @@ function generateExplainHTML(originalQuery, planData) {
       .attr('class', 'node-metric')
       .style('fill', '#ff9800')
       .text('⚠');
+
+    // Initialize syntax highlighting for the query
+    if (typeof hljs !== 'undefined') {
+      hljs.highlightAll();
+    }
   </script>
 </body>
 </html>`;
