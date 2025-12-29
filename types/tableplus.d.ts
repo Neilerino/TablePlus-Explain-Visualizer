@@ -24,37 +24,56 @@ declare const Application: TablePlusApplication;
 /**
  * The Application object provides access to TablePlus application-level
  * functionality and metadata.
+ *
+ * Discovered via runtime inspection - 5 methods total.
  */
 interface TablePlusApplication {
   /**
    * Get the root path where TablePlus plugins are installed
    * @returns Absolute path to the plugins directory
    * @example
-   * "/Users/username/Library/Application Support/com.tinyapp.TablePlus/Plugins"
+   * const path = Application.pluginRootPath();
+   * // "/Users/username/Library/Application Support/com.tinyapp.TablePlus/Plugins"
+   * @confirmed Working
    */
   pluginRootPath(): string;
 
   /**
-   * Save a file to disk (exact API unknown - needs testing)
-   * @param path - File path
-   * @param content - File content
+   * Get the current platform identifier
+   * @returns Platform name (e.g., "darwin" for macOS, "win32" for Windows)
+   * @example
+   * const platform = Application.platform();
+   * // "darwin"
+   * @confirmed Working
+   */
+  platform(): string;
+
+  /**
+   * Get the TablePlus application version
+   * @returns Version string (e.g., "5.3.6")
+   * @example
+   * const version = Application.appVersion();
+   * @confirmed Working
+   */
+  appVersion(): string;
+
+  /**
+   * Get the TablePlus application build number
+   * @returns Build number string
+   * @example
+   * const build = Application.appBuild();
+   * @confirmed Working
+   */
+  appBuild(): string;
+
+  /**
+   * Save a file to disk
+   * @param path - File path to save to
+   * @param content - File content to write
+   * @example
+   * Application.saveFile('/path/to/file.txt', 'content');
    */
   saveFile(path: string, content: string): void;
-
-  /**
-   * Platform identifier (e.g., "darwin" for macOS)
-   */
-  readonly platform: string;
-
-  /**
-   * TablePlus application version
-   */
-  readonly appVersion: string;
-
-  /**
-   * TablePlus application build number
-   */
-  readonly appBuild: string;
 }
 
 // ============================================
@@ -64,20 +83,20 @@ interface TablePlusApplication {
 /**
  * The context object is passed to plugin entry functions.
  * It provides access to the current query editor, database execution,
- * and UI display capabilities.
+ * UI display capabilities, and table data access.
+ *
+ * Discovered via runtime inspection - 32 methods total.
  */
 interface TablePlusContext {
-  /**
-   * Execute a SQL query against the current database connection
-   * @param query - SQL query string to execute
-   * @param callback - Callback function to handle query results
-   */
-  execute(query: string, callback: (result: QueryResult) => void): void;
+  // ============================================
+  // UI DISPLAY METHODS
+  // ============================================
 
   /**
    * Display an alert dialog to the user
    * @param title - Alert dialog title
    * @param message - Alert dialog message
+   * @confirmed Working
    */
   alert(title: string, message: string): void;
 
@@ -86,6 +105,7 @@ interface TablePlusContext {
    * @param filePath - Absolute path to the HTML file
    * @param options - Load options (usually null)
    * @returns WebView object for further interaction
+   * @confirmed Working
    */
   loadFile(filePath: string, options: null): TablePlusWebView;
 
@@ -93,14 +113,204 @@ interface TablePlusContext {
    * Load HTML content directly into a WebView (legacy method)
    * @param html - HTML string to display
    * @deprecated Prefer loadFile() with external HTML files
+   * @confirmed Working
    */
   loadHTML(html: string): void;
 
   /**
+   * Load a URL into a WebView
+   * @param url - URL to load
+   */
+  loadURL(url: string): TablePlusWebView;
+
+  /**
+   * Open a URL in the system default browser
+   * @param url - URL to open
+   */
+  openURL(url: string): void;
+
+  // ============================================
+  // QUERY EDITOR METHODS
+  // ============================================
+
+  /**
    * Get the current query editor instance
    * @returns Query editor object or null if no editor is active
+   * @confirmed Working
    */
   currentQueryEditor(): TablePlusQueryEditor | null;
+
+  /**
+   * Get the user's preferred editor setting
+   * @returns Editor preference (exact type unknown)
+   */
+  preferredEditor(): any;
+
+  // ============================================
+  // DATABASE EXECUTION METHODS
+  // ============================================
+
+  /**
+   * Execute a SQL query against the current database connection
+   * @param query - SQL query string to execute
+   * @param callback - Callback function to handle query results
+   * @confirmed Working
+   */
+  execute(query: string, callback: (result: QueryResult) => void): void;
+
+  /**
+   * Commit current transaction changes
+   */
+  commit(): void;
+
+  /**
+   * Discard/rollback current transaction changes
+   */
+  discard(): void;
+
+  /**
+   * Update the current item/row
+   * @param data - Data to update (exact structure unknown)
+   */
+  update(data: any): void;
+
+  /**
+   * Refresh the current view/data
+   */
+  refresh(): void;
+
+  /**
+   * Reload the current view/connection
+   */
+  reload(): void;
+
+  // ============================================
+  // DATA ACCESS METHODS (TABLE/ITEM CONTEXT)
+  // ============================================
+
+  /**
+   * Get the column that was clicked in table view
+   * @returns Column information (exact structure unknown)
+   */
+  clickedColumn(): any;
+
+  /**
+   * Get the item that was clicked in sidebar/tree view
+   * @returns Clicked item (table, view, function, etc.)
+   */
+  clickedItem(): any;
+
+  /**
+   * Get the row index that was clicked in table view
+   * @returns Row index or null
+   */
+  clickedRow(): number | null;
+
+  /**
+   * Get the value of the cell that was clicked
+   * @returns Cell value
+   */
+  clickedRowValue(): any;
+
+  /**
+   * Get the current active item (table, view, etc.)
+   * @returns Current item
+   */
+  currentItem(): any;
+
+  /**
+   * Get the currently displayed rows in table view
+   * @returns Array of row data
+   */
+  currentRows(): Array<Record<string, any>>;
+
+  /**
+   * Get the current schema name
+   * @returns Schema name or null
+   */
+  currentSchema(): string | null;
+
+  /**
+   * Get the currently selected item in sidebar
+   * @returns Selected item (table, view, function, etc.)
+   */
+  selectedItem(): any;
+
+  /**
+   * Get all currently selected items in sidebar
+   * @returns Array of selected items
+   */
+  selectedItems(): Array<any>;
+
+  /**
+   * Get the currently selected rows in table view
+   * @returns Array of selected row indices or data
+   */
+  selectedRows(): Array<any>;
+
+  /**
+   * Get all items (tables, views, etc.) in current context
+   * @returns Array of database items
+   */
+  items(): Array<any>;
+
+  /**
+   * Get the definition/schema of a database item
+   * @param item - Item to get definition for
+   * @returns Item definition (CREATE statement, etc.)
+   */
+  itemDefinition(item: any): string;
+
+  /**
+   * Fetch metadata for the current context
+   * @param callback - Callback to handle metadata
+   */
+  fetchMeta(callback: (meta: any) => void): void;
+
+  /**
+   * Fetch rows from a table or query
+   * @param options - Fetch options (limit, offset, etc.)
+   * @param callback - Callback to handle fetched rows
+   */
+  fetchRows(options: any, callback: (rows: Array<Record<string, any>>) => void): void;
+
+  // ============================================
+  // DRIVER/CONNECTION METHODS
+  // ============================================
+
+  /**
+   * Get the current database driver information
+   * @returns Driver name/type (e.g., "postgres", "mysql")
+   */
+  driver(): string;
+
+  // ============================================
+  // FORMATTING PREFERENCES
+  // ============================================
+
+  /**
+   * Get user preference for auto-uppercase SQL keywords
+   * @returns True if auto-uppercase is enabled
+   */
+  formatAutoUppercase(): boolean;
+
+  /**
+   * Get user preference for tab width in formatting
+   * @returns Tab width (number of spaces)
+   */
+  formatTabWidth(): number;
+
+  /**
+   * Get user preference for using tabs vs spaces
+   * @returns True if tabs should be used, false for spaces
+   */
+  formatUseTabs(): boolean;
+
+  /**
+   * Check if should fallback to old formatter
+   * @returns True if old formatter should be used
+   */
+  fallbackToOldFormatter(): boolean;
 }
 
 // ============================================
@@ -198,31 +408,93 @@ interface TablePlusWebView {
 // ============================================
 
 /**
+ * Represents a single row in query results
+ * Row data is accessed via the raw() method
+ *
+ * Discovered via runtime inspection.
+ */
+interface QueryRow {
+  /**
+   * Get the raw value for a specific column
+   * @param columnName - Name of the column to retrieve
+   * @returns The value for that column
+   * @example
+   * const row = result.rows[0];
+   * const id = row.raw('id');
+   * const name = row.raw('name');
+   * @confirmed Working
+   */
+  raw(columnName: string): any;
+}
+
+/**
+ * Column metadata object
+ *
+ * Discovered via runtime inspection.
+ */
+interface QueryColumn {
+  /**
+   * Column name
+   */
+  name: string;
+
+  /**
+   * Column index (0-based)
+   */
+  index: number;
+
+  /**
+   * Column type object (NSObject)
+   */
+  type: any;
+
+  /**
+   * Column type as string
+   * @example "int4", "text", "varchar", "timestamp"
+   */
+  typeString: string;
+}
+
+/**
  * Result object passed to execute() callback
- * Structure is inferred from EXPLAIN query results
+ *
+ * Discovered via runtime inspection.
  */
 interface QueryResult {
   /**
-   * Rows returned by the query
-   * For EXPLAIN queries, this contains the plan data
+   * Array of row objects
+   * Access row data using row.raw(columnName)
+   * @example
+   * const rows = result.rows;
+   * const firstRow = rows[0];
+   * const value = firstRow.raw('column_name');
+   * @confirmed Working
    */
-  rows?: Array<Record<string, any>>;
+  rows: Array<QueryRow>;
 
   /**
-   * Column metadata (exact structure unknown)
+   * Column metadata indexed by column name
+   * @example
+   * const columns = result.columns;
+   * const idColumn = columns['id'];
+   * console.log(idColumn.typeString); // "int4"
+   * @confirmed Working
    */
-  columns?: Array<{
-    name: string;
-    type?: string;
-  }>;
-
-  /**
-   * Error information if query failed
-   */
-  error?: {
-    message: string;
-    code?: string;
+  columns: {
+    [columnName: string]: QueryColumn;
   };
+
+  /**
+   * The SQL query that was executed
+   * @confirmed Working
+   */
+  message: string;
+
+  /**
+   * Error position in query (-1 if no error)
+   * @confirmed Working
+   */
+  errorPosition: number;
 }
 
 // ============================================
@@ -297,5 +569,7 @@ export {
   TablePlusTextRange,
   TablePlusWebView,
   QueryResult,
+  QueryRow,
+  QueryColumn,
   TablePlusPluginManifest
 };

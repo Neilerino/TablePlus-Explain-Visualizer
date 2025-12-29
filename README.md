@@ -67,13 +67,17 @@ open PostgresExplain.tableplusplugin
 5. Generates self-contained HTML with embedded visualization
 6. Displays using TablePlus's HTML viewer
 
+## TablePlus Plugin API Type Definitions
+
+The types directory contains a TypeScript definition file that documents the TablePlus plugin API. Because there is no publicaly available documentation it was reverse engineered via `Object.getOwnPropertyNames()`. I can't guarentee the definitions in that file are up to date with the latest TablePlus version. But it should help serve as a jumping off point for anyone else looking to make their own plugin.
+
 ## Contributing
 
 Feel free to submit issues or pull requests for:
 
 - Additional performance metrics to display
 - Better visualization layouts
-- Support for other database engines
+- Missing/Out of date params in the TablePlus API
 - Bug fixes
 
 ## License
