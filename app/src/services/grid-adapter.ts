@@ -42,6 +42,10 @@ export class GridAdapter {
         costPercent: Math.round(costPercent * 10) / 10,
         time: nodeTime,
         timePercent: Math.round(timePercent * 10) / 10,
+        selfCost: nodeCost, // Will be calculated after children
+        selfCostPercent: Math.round(costPercent * 10) / 10, // Will be calculated after children
+        selfTime: nodeTime, // Will be calculated after children
+        selfTimePercent: Math.round(timePercent * 10) / 10, // Will be calculated after children
         planRows: typeof node.details.planRows === 'number' ? node.details.planRows : parseInt(String(node.details.planRows), 10) || 0,
         actualRows: typeof node.details.actualRows === 'number' ? node.details.actualRows : parseInt(String(node.details.actualRows), 10) || 0,
         loops: node.details.loops,
@@ -55,6 +59,17 @@ export class GridAdapter {
       // Recursively create child rows
       if (node.children && node.children.length > 0) {
         row.subRows = node.children.map(child => createGridRow(child, depth + 1));
+
+        // Calculate exclusive (self) values: total - sum(children)
+        const childrenCost = row.subRows.reduce((sum, child) => sum + child.cost, 0);
+        const childrenTime = row.subRows.reduce((sum, child) => sum + child.time, 0);
+
+        row.selfCost = Math.max(0, nodeCost - childrenCost);
+        row.selfTime = Math.max(0, nodeTime - childrenTime);
+
+        // Calculate exclusive percentages
+        row.selfCostPercent = rootCost > 0 ? Math.round((row.selfCost / rootCost) * 1000) / 10 : 0;
+        row.selfTimePercent = rootTime > 0 ? Math.round((row.selfTime / rootTime) * 1000) / 10 : 0;
       }
 
       return row;

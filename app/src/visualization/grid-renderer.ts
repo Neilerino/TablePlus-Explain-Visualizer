@@ -96,37 +96,69 @@ export class GridRenderer {
       {
         accessorKey: 'cost',
         header: 'Cost',
-        size: 100,
+        size: 150,
         cell: (info) => {
-          const value = info.getValue() as number;
-          return value.toFixed(2);
+          const row = info.row.original;
+          const totalCost = info.getValue() as number;
+          const selfCost = row.selfCost;
+
+          // Show self value for parent nodes (where self != total)
+          const hasChildren = row.subRows && row.subRows.length > 0;
+          if (hasChildren && Math.abs(totalCost - selfCost) > 0.01) {
+            return `${totalCost.toFixed(2)} <span style="color: var(--text-secondary); font-size: 11px;">(self: ${selfCost.toFixed(2)})</span>`;
+          }
+          return totalCost.toFixed(2);
         },
       },
       {
         accessorKey: 'costPercent',
         header: 'Cost %',
-        size: 100,
+        size: 150,
         cell: (info) => {
-          const value = info.getValue() as number;
-          return `${value.toFixed(1)}%`;
+          const row = info.row.original;
+          const totalPercent = info.getValue() as number;
+          const selfPercent = row.selfCostPercent;
+
+          // Show self value for parent nodes (where self != total)
+          const hasChildren = row.subRows && row.subRows.length > 0;
+          if (hasChildren && Math.abs(totalPercent - selfPercent) > 0.1) {
+            return `${totalPercent.toFixed(1)}% <span style="color: var(--text-secondary); font-size: 11px;">(self: ${selfPercent.toFixed(1)}%)</span>`;
+          }
+          return `${totalPercent.toFixed(1)}%`;
         },
       },
       {
         accessorKey: 'time',
         header: 'Time (ms)',
-        size: 120,
+        size: 170,
         cell: (info) => {
-          const value = info.getValue() as number;
-          return value.toFixed(3);
+          const row = info.row.original;
+          const totalTime = info.getValue() as number;
+          const selfTime = row.selfTime;
+
+          // Show self value for parent nodes (where self != total)
+          const hasChildren = row.subRows && row.subRows.length > 0;
+          if (hasChildren && Math.abs(totalTime - selfTime) > 0.001) {
+            return `${totalTime.toFixed(3)} <span style="color: var(--text-secondary); font-size: 11px;">(self: ${selfTime.toFixed(3)})</span>`;
+          }
+          return totalTime.toFixed(3);
         },
       },
       {
         accessorKey: 'timePercent',
         header: 'Time %',
-        size: 100,
+        size: 150,
         cell: (info) => {
-          const value = info.getValue() as number;
-          return `${value.toFixed(1)}%`;
+          const row = info.row.original;
+          const totalPercent = info.getValue() as number;
+          const selfPercent = row.selfTimePercent;
+
+          // Show self value for parent nodes (where self != total)
+          const hasChildren = row.subRows && row.subRows.length > 0;
+          if (hasChildren && Math.abs(totalPercent - selfPercent) > 0.1) {
+            return `${totalPercent.toFixed(1)}% <span style="color: var(--text-secondary); font-size: 11px;">(self: ${selfPercent.toFixed(1)}%)</span>`;
+          }
+          return `${totalPercent.toFixed(1)}%`;
         },
       },
       {
@@ -266,23 +298,24 @@ export class GridRenderer {
   private getCellClass(columnId: string, rowData: GridRowData): string {
     const classes = ['explain-table-cell'];
 
-    // Add color classes for metric columns
+    // Add color classes for metric columns based on SELF values
     if (columnId === 'cost') {
-      const cost = rowData.cost;
+      const cost = rowData.selfCost; // Use self cost for color coding
       if (cost > 1000) classes.push('cell-red');
       else if (cost > 100) classes.push('cell-orange');
       else classes.push('cell-green');
     }
 
     if (columnId === 'time') {
-      const time = rowData.time;
+      const time = rowData.selfTime; // Use self time for color coding
       if (time > 1000) classes.push('cell-red');
       else if (time > 100) classes.push('cell-orange');
       else classes.push('cell-green');
     }
 
     if (columnId === 'costPercent' || columnId === 'timePercent') {
-      const percent = columnId === 'costPercent' ? rowData.costPercent : rowData.timePercent;
+      // Use self percentages for color coding
+      const percent = columnId === 'costPercent' ? rowData.selfCostPercent : rowData.selfTimePercent;
       if (percent > 50) classes.push('cell-red');
       else if (percent > 10) classes.push('cell-orange');
       else classes.push('cell-green');
@@ -315,28 +348,16 @@ export class GridRenderer {
 
     // Attach expand button listeners
     const expandButtons = this.container.querySelectorAll('.expand-btn');
-    console.log('Found expand buttons:', expandButtons.length);
     expandButtons.forEach((button) => {
       button.addEventListener('click', (e) => {
         e.stopPropagation(); // Prevent row click
         const rowId = button.getAttribute('data-row-id');
-        console.log('Expand button clicked for row:', rowId);
-
-        if (!rowId || !this.table) {
-          console.log('No rowId or table:', { rowId, hasTable: !!this.table });
-          return;
-        }
+        if (!rowId || !this.table) return;
 
         // Find the row in the table
-        console.log('Available rows:', Object.keys(this.table.getRowModel().rowsById || {}));
         const row = this.table.getRowModel().rowsById[rowId];
-        console.log('Found row:', row?.id, 'canExpand:', row?.getCanExpand(), 'isExpanded:', row?.getIsExpanded());
-
         if (row && row.getCanExpand()) {
-          console.log('Toggling expansion...');
           row.toggleExpanded();
-          console.log('New expansion state:', row.getIsExpanded());
-          console.log('Table state after toggle:', this.tableState.expanded);
 
           // Recreate table instance with updated state, then re-render
           this.createTableInstance();
@@ -358,15 +379,11 @@ export class GridRenderer {
         return;
       }
 
-      // Click handler (but not for expand button clicks)
+      // Single-click for selection (visual feedback only)
       row.addEventListener('click', (e) => {
         // Don't trigger if clicking the expand button
         if ((e.target as HTMLElement).classList.contains('expand-btn')) {
           return;
-        }
-
-        if (this.onNodeSelect) {
-          this.onNodeSelect(rowData);
         }
 
         // Update selected state
@@ -375,6 +392,18 @@ export class GridRenderer {
         // Visual feedback
         rows.forEach(r => r.classList.remove('selected'));
         row.classList.add('selected');
+      });
+
+      // Double-click to open sidebar with details
+      row.addEventListener('dblclick', (e) => {
+        // Don't trigger if clicking the expand button
+        if ((e.target as HTMLElement).classList.contains('expand-btn')) {
+          return;
+        }
+
+        if (this.onNodeSelect) {
+          this.onNodeSelect(rowData);
+        }
       });
     });
   }

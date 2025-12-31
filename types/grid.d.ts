@@ -16,6 +16,10 @@ export interface GridRowData {
   costPercent: number;
   time: number;
   timePercent: number;
+  selfCost: number; // Exclusive cost (excluding children)
+  selfCostPercent: number; // Exclusive cost percentage
+  selfTime: number; // Exclusive time (excluding children)
+  selfTimePercent: number; // Exclusive time percentage
   planRows: number;
   actualRows: number;
   loops: number;
