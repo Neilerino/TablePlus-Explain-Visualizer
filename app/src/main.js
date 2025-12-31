@@ -14,6 +14,7 @@ import { GridAdapter } from './services/grid-adapter.ts';
 import { GridRenderer } from './visualization/grid-renderer.ts';
 import { renderViewToggle } from './ui/view-toggle.ts';
 import { renderCriticalPathControl } from './ui/critical-path-control.ts';
+import { bootstrapApplication } from './infrastructure/di/bootstrap.ts';
 
 // Register SQL language for syntax highlighting
 hljs.registerLanguage('sql', sql);
@@ -31,7 +32,11 @@ const appState = {
   gridRenderer: null,
   criticalPathEnabled: false,
   criticalPath: [],
-  criticalPathVisualizer: null
+  criticalPathVisualizer: null,
+  // CLEAN architecture DI container
+  diContainer: null,
+  visualizationController: null,
+  sidebarController: null
 };
 
 // Load saved state from localStorage
@@ -153,7 +158,16 @@ export function initializeApp() {
 
   loadState();
 
-  // Initialize collapse buttons
+  // Bootstrap CLEAN architecture DI container
+  appState.diContainer = bootstrapApplication(d3);
+
+  // Initialize controllers
+  appState.sidebarController = appState.diContainer.resolve('sidebarController');
+
+  // Initialize sidebar resize handles through controller
+  appState.sidebarController.initializeResizeHandles();
+
+  // Initialize collapse buttons (legacy - will be removed once fully migrated)
   document.getElementById('leftSidebarCollapseBtn').addEventListener('click', () => toggleSidebar('left'));
   document.getElementById('rightSidebarCollapseBtn').addEventListener('click', () => toggleSidebar('right'));
 
@@ -163,8 +177,8 @@ export function initializeApp() {
     document.getElementById('leftSidebarCollapseBtn').textContent = '▶';
   }
 
-  // Initialize resize handles
-  initResizeHandles();
+  // Initialize resize handles (legacy - now handled by controller above)
+  // initResizeHandles();
 
   // Apply saved widths
   document.getElementById('leftSidebar').style.width = appState.leftSidebarWidth + 'px';
@@ -181,10 +195,34 @@ export function renderVisualization(data) {
 
   console.log('Rendering visualization with data:', { query, planData, treeData, criticalPath });
 
-  // Initialize View Manager if not already done
+  // Initialize View Manager if not already done (legacy - kept for backward compatibility)
   if (!appState.viewManager) {
     appState.viewManager = new ViewManager();
     appState.viewManager.setCriticalPath(criticalPath);
+  }
+
+  // Initialize CLEAN architecture VisualizationController
+  if (!appState.visualizationController && appState.diContainer) {
+    appState.visualizationController = appState.diContainer.resolve('visualizationController');
+
+    // Wrapper for populateNodeDetails that includes hljs
+    const onNodeSelect = (node) => {
+      populateNodeDetails(node, hljs);
+
+      // Open right sidebar if collapsed
+      const rightSidebar = document.getElementById('rightSidebar');
+      if (rightSidebar && rightSidebar.classList.contains('collapsed')) {
+        appState.sidebarController.toggleSidebar('right');
+      }
+    };
+
+    // Initialize controller with visualization data
+    appState.visualizationController.initialize({
+      treeData,
+      planData,
+      criticalPath,
+      query
+    }, onNodeSelect);
   }
 
   // Store critical path in appState

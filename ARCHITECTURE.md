@@ -1,9 +1,9 @@
 # TablePlus EXPLAIN Visualizer - CLEAN Architecture
 
 ## Table of Contents
+
 - [Vision: Target Architecture](#vision-target-architecture)
 - [Current State Analysis](#current-state-analysis)
-- [Migration Strategy: Strangler Fig Pattern](#migration-strategy-strangler-fig-pattern)
 - [Progressive Migration Phases](#progressive-migration-phases)
 - [Architecture Principles](#architecture-principles)
 - [Implementation Examples](#implementation-examples)
@@ -157,17 +157,20 @@ User Action (e.g., clicks a node)
 ### Key Architectural Principles
 
 1. **Dependency Rule**: Dependencies point inward (toward domain)
+
    - Presentation depends on Application
    - Application depends on Domain
    - Infrastructure implements Domain interfaces
    - Domain depends on nothing
 
 2. **Single Responsibility**: Each module has one reason to change
+
    - `SelectNodeUseCase`: Only changes if node selection logic changes
    - `D3TreeRenderer`: Only changes if rendering technology changes
    - `NodeDetailsViewModel`: Only changes if presentation format changes
 
 3. **Dependency Inversion**: Depend on abstractions, not concretions
+
    ```typescript
    // ✅ GOOD: Use case depends on interface
    class RenderVisualizationUseCase {
@@ -181,6 +184,7 @@ User Action (e.g., clicks a node)
    ```
 
 4. **Interface Segregation**: Clients shouldn't depend on interfaces they don't use
+
    ```typescript
    // ✅ GOOD: Small, focused interfaces
    interface ITreeRenderer {
@@ -197,8 +201,8 @@ User Action (e.g., clicks a node)
 5. **Open/Closed**: Open for extension, closed for modification
    ```typescript
    // Can add new renderer without modifying existing code
-   class CanvasTreeRenderer implements ITreeRenderer { }
-   class WebGLTreeRenderer implements ITreeRenderer { }
+   class CanvasTreeRenderer implements ITreeRenderer {}
+   class WebGLTreeRenderer implements ITreeRenderer {}
    ```
 
 ---
@@ -208,6 +212,7 @@ User Action (e.g., clicks a node)
 ### What's Already CLEAN
 
 #### ✅ Domain Analysis Layer (`/src/core/analysis/`)
+
 ```typescript
 // Already follows CLEAN architecture principles
 export abstract class PathAnalyzer {
@@ -223,12 +228,14 @@ export class ExecutionTimeAnalyzer extends PathAnalyzer {
 ```
 
 **Why it's good:**
+
 - Abstract base class with strategy pattern
 - Dependency inversion (depends on `MetricExtractor` interface)
 - Single responsibility
 - Testable (pure functions)
 
 #### ✅ Service Layer (Partial)
+
 - `ViewManager` - Clean state management
 - `GridAdapter` - Pure transformation logic
 - `CriticalPathVisualizer` - Focused responsibility
@@ -238,6 +245,7 @@ export class ExecutionTimeAnalyzer extends PathAnalyzer {
 #### ❌ Monolithic Controller (`/app/src/main.js` - 327 lines)
 
 **Current Problems:**
+
 ```javascript
 // Mixed concerns: state + UI + orchestration + persistence
 const appState = {
@@ -245,7 +253,7 @@ const appState = {
   selectedNode: null,
   viewManager: null,
   criticalPathEnabled: false,
-  criticalPathVisualizer: null
+  criticalPathVisualizer: null,
 };
 
 function initializeApp() {
@@ -265,6 +273,7 @@ function renderVisualization(data) {
 ```
 
 **Why it's problematic:**
+
 - Violates Single Responsibility Principle (does everything)
 - Global mutable state (hard to reason about)
 - Cannot test individual pieces
@@ -274,16 +283,17 @@ function renderVisualization(data) {
 #### ❌ Coupled Tree Renderer (`/app/src/visualization/tree-renderer.js`)
 
 **Current Problems:**
+
 ```javascript
 // 7 coupled parameters!
 export function renderTree(
-  d3,                    // External library
-  treeData,              // Data
-  appState,              // Global state
-  toggleSidebar,         // UI callback
-  populateNodeDetails,   // UI callback
-  saveState,             // Persistence callback
-  criticalPath           // More data
+  d3, // External library
+  treeData, // Data
+  appState, // Global state
+  toggleSidebar, // UI callback
+  populateNodeDetails, // UI callback
+  saveState, // Persistence callback
+  criticalPath // More data
 ) {
   // D3 rendering logic
   // + State mutations
@@ -293,6 +303,7 @@ export function renderTree(
 ```
 
 **Why it's problematic:**
+
 - Cannot render tree without entire application context
 - Cannot test D3 logic in isolation
 - Cannot swap D3 for another rendering library
@@ -301,26 +312,29 @@ export function renderTree(
 #### ❌ Procedural UI Components (`/app/src/ui/node-details.js`)
 
 **Current Problems:**
+
 ```javascript
 // 218 lines of string concatenation
 export function populateNodeDetails(node, hljs) {
-  let content = '<div class="detail-title">' + node.name + '</div>';
+  let content = '<div class="detail-title">' + node.name + "</div>";
 
   // Business logic in presentation!
   if (node.details.sharedHitBlocks > 0) {
     const hitRate = (
-      node.details.sharedHitBlocks /
-      (node.details.sharedHitBlocks + node.details.sharedReadBlocks) * 100
+      (node.details.sharedHitBlocks /
+        (node.details.sharedHitBlocks + node.details.sharedReadBlocks)) *
+      100
     ).toFixed(1);
-    content += '<div>Cache Hit Rate: ' + hitRate + '%</div>';
+    content += "<div>Cache Hit Rate: " + hitRate + "%</div>";
   }
 
   // Direct DOM manipulation
-  document.getElementById('node-details').innerHTML = content;
+  document.getElementById("node-details").innerHTML = content;
 }
 ```
 
 **Why it's problematic:**
+
 - Business logic (cache hit rate calculation) in presentation
 - No separation between data and display
 - Cannot test logic without DOM
@@ -328,167 +342,15 @@ export function populateNodeDetails(node, hljs) {
 
 ### Architecture Debt Summary
 
-| Component | Lines | Issues | Refactor Effort |
-|-----------|-------|--------|-----------------|
-| `main.js` | 327 | Monolithic controller, mixed concerns | HIGH |
-| `tree-renderer.js` | 75 | 7 coupled params, mixed responsibilities | MEDIUM |
-| `node-details.js` | 218 | Business logic in UI, string concat | MEDIUM |
-| `interactions.js` | 45 | Scattered event handling | LOW |
-| `stats-panel.js` | 89 | Similar issues to node-details | LOW |
+| Component          | Lines | Issues                                   | Refactor Effort |
+| ------------------ | ----- | ---------------------------------------- | --------------- |
+| `main.js`          | 327   | Monolithic controller, mixed concerns    | HIGH            |
+| `tree-renderer.js` | 75    | 7 coupled params, mixed responsibilities | MEDIUM          |
+| `node-details.js`  | 218   | Business logic in UI, string concat      | MEDIUM          |
+| `interactions.js`  | 45    | Scattered event handling                 | LOW             |
+| `stats-panel.js`   | 89    | Similar issues to node-details           | LOW             |
 
 **Total debt: ~754 lines** requiring refactoring
-
----
-
-## Migration Strategy: Strangler Fig Pattern
-
-### What is the Strangler Fig Pattern?
-
-The Strangler Fig pattern is an incremental migration approach where:
-
-1. **New code grows alongside old code** (like a strangler fig tree growing around a host tree)
-2. **New features route through new architecture**
-3. **Old features gradually migrate** one at a time
-4. **Old code is deleted** when fully replaced and proven
-
-### Why Strangler Fig vs Big Bang Rewrite?
-
-| Aspect | Big Bang | Strangler Fig |
-|--------|----------|---------------|
-| **Risk** | ⚠️ HIGH - All at once | ✅ LOW - Incremental |
-| **Testing** | ⚠️ Hard to test everything | ✅ Test each piece |
-| **Rollback** | ❌ Cannot rollback | ✅ Can revert piece by piece |
-| **Delivery** | ⚠️ Long wait for value | ✅ Deliver continuously |
-| **Learning** | ⚠️ Learn at end | ✅ Learn as you go |
-
-### Strangler Fig Applied to This Project
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      Phase 0: Current State                  │
-│                                                              │
-│  ┌────────────────────────────────────────────────────┐    │
-│  │              LEGACY CODE (754 lines)                │    │
-│  │                                                      │    │
-│  │  main.js → tree-renderer.js → node-renderer.js      │    │
-│  │    ↓             ↓                 ↓                 │    │
-│  │  Global      D3 coupled      String concat           │    │
-│  │  appState    to callbacks    HTML                    │    │
-│  └────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────┘
-
-                            ↓ Week 1-2: Grow new foundation
-
-┌─────────────────────────────────────────────────────────────┐
-│                  Phase 1: Foundation Grown                   │
-│                                                              │
-│  ┌────────────────────┐  ┌────────────────────────────┐    │
-│  │   LEGACY CODE      │  │     NEW CODE               │    │
-│  │   (still works)    │  │                            │    │
-│  │                    │  │  /domain/                  │    │
-│  │  main.js           │  │    entities/               │    │
-│  │  tree-renderer.js  │  │    interfaces/             │    │
-│  │  node-details.js   │  │  /application/             │    │
-│  │                    │  │    interfaces/             │    │
-│  │  100% traffic      │  │  (no traffic yet)          │    │
-│  └────────────────────┘  └────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────┘
-
-                            ↓ Week 3-4: Route new features
-
-┌─────────────────────────────────────────────────────────────┐
-│              Phase 2: New Features Use New Code              │
-│                                                              │
-│  ┌────────────────────┐  ┌────────────────────────────┐    │
-│  │   LEGACY CODE      │  │     NEW CODE               │    │
-│  │                    │  │                            │    │
-│  │  main.js           │  │  Use Cases                 │    │
-│  │  tree-renderer.js  │  │  ViewStateManager          │    │
-│  │  node-details.js   │  │  Interfaces                │    │
-│  │                    │  │                            │    │
-│  │  80% traffic ◄─────┼──┤  Export CSV ───────┐       │    │
-│  │                    │  │  (new feature)     │       │    │
-│  │                    │  │  20% traffic       │       │    │
-│  └────────────────────┘  └────────────────────┴───────┘    │
-└─────────────────────────────────────────────────────────────┘
-
-                            ↓ Week 5-6: Migrate incrementally
-
-┌─────────────────────────────────────────────────────────────┐
-│           Phase 3: Gradually Replace Legacy                  │
-│                                                              │
-│  ┌────────────────────┐  ┌────────────────────────────┐    │
-│  │   LEGACY CODE      │  │     NEW CODE               │    │
-│  │   (shrinking)      │  │                            │    │
-│  │                    │  │  Controllers               │    │
-│  │  main.js ─────┐    │  │  Use Cases                 │    │
-│  │  (50% left)   │    │  │  D3TreeRenderer            │    │
-│  │               │    │  │  ViewStateManager          │    │
-│  │  40% traffic  │    │  │                            │    │
-│  │               │    │  │  60% traffic               │    │
-│  │               │    │  │  ▲                          │    │
-│  │               └────┼──┼──┘ Migrated piece by piece │    │
-│  └────────────────────┘  └────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────┘
-
-                            ↓ Week 7: Complete migration
-
-┌─────────────────────────────────────────────────────────────┐
-│                 Phase 4: Legacy Code Removed                 │
-│                                                              │
-│                         ┌────────────────────────────┐      │
-│                         │     CLEAN ARCHITECTURE      │      │
-│                         │                            │      │
-│                         │  Presentation              │      │
-│                         │    ↓                       │      │
-│                         │  Application               │      │
-│                         │    ↓                       │      │
-│                         │  Domain                    │      │
-│                         │    ↓                       │      │
-│                         │  Infrastructure            │      │
-│                         │                            │      │
-│                         │  100% traffic              │      │
-│                         └────────────────────────────┘      │
-│                                                              │
-│  ❌ Legacy code deleted                                      │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Migration Safety: Git-Based Rollback
-
-Since this is a GitHub-distributed TablePlus plugin (not a live web service), our safety mechanism is **simple and effective**:
-
-#### Git Tags for Stable Releases
-```bash
-# Tag stable versions before major refactoring
-git tag -a v2.0.0-legacy -m "Last stable version before CLEAN migration"
-git push origin v2.0.0-legacy
-
-# Users can always rollback to stable version
-git checkout v2.0.0-legacy
-```
-
-#### Branch-Based Migration
-```bash
-# Create migration branch
-git checkout -b feature/clean-architecture
-
-# Commit frequently with clear messages
-git commit -m "feat: add domain layer interfaces"
-git commit -m "feat: create SelectNodeUseCase"
-git commit -m "refactor: extract D3TreeRenderer"
-
-# If something breaks, revert specific commits
-git revert <commit-hash>
-```
-
-**No need for:**
-- ❌ Feature flags (just use git branches)
-- ❌ Progressive rollout (users choose their version)
-- ❌ A/B testing (not a web service)
-- ❌ Parallel running (test locally before committing)
-
----
 
 ## Progressive Migration Phases
 
@@ -497,6 +359,7 @@ git revert <commit-hash>
 **Goal**: Create new architecture structure without touching working code
 
 **What to create:**
+
 ```
 /app/src/domain/
   /entities/
@@ -517,6 +380,7 @@ git revert <commit-hash>
 **Concrete tasks:**
 
 #### Task 1.1: Define Core Interfaces
+
 ```typescript
 // /app/src/application/interfaces/i-tree-renderer.ts
 export interface ITreeRenderer {
@@ -535,10 +399,11 @@ export interface TreeRenderConfig {
 ```
 
 #### Task 1.2: Create Domain Entities
+
 ```typescript
 // /app/src/domain/entities/visualization-state.entity.ts
 export interface VisualizationState {
-  currentView: 'graph' | 'grid';
+  currentView: "graph" | "grid";
   selectedNodeId: string | null;
   criticalPathEnabled: boolean;
   leftSidebarWidth: number;
@@ -548,14 +413,16 @@ export interface VisualizationState {
 export class VisualizationStateEntity {
   private constructor(private state: VisualizationState) {}
 
-  static create(initial?: Partial<VisualizationState>): VisualizationStateEntity {
+  static create(
+    initial?: Partial<VisualizationState>
+  ): VisualizationStateEntity {
     return new VisualizationStateEntity({
-      currentView: 'graph',
+      currentView: "graph",
       selectedNodeId: null,
       criticalPathEnabled: false,
       leftSidebarWidth: 350,
       rightSidebarCollapsed: false,
-      ...initial
+      ...initial,
     });
   }
 
@@ -563,7 +430,7 @@ export class VisualizationStateEntity {
   selectNode(nodeId: string): VisualizationStateEntity {
     return new VisualizationStateEntity({
       ...this.state,
-      selectedNodeId: nodeId
+      selectedNodeId: nodeId,
     });
   }
 
@@ -582,6 +449,7 @@ export class VisualizationStateEntity {
 **Goal**: Create use cases and services that can run alongside legacy code
 
 #### Task 2.1: Create First Use Case
+
 ```typescript
 // /app/src/application/use-cases/select-node.use-case.ts
 export class SelectNodeUseCase {
@@ -601,6 +469,7 @@ export class SelectNodeUseCase {
 ```
 
 #### Task 2.2: Enhance State Management
+
 ```typescript
 // /app/src/application/services/view-state-manager.ts
 export class ViewStateManager {
@@ -628,17 +497,18 @@ export class ViewStateManager {
 ```
 
 #### Task 2.3: Test Use Cases Independently
+
 ```typescript
 // Test new use cases in isolation before integrating
-describe('SelectNodeUseCase', () => {
-  it('should update state and publish event', () => {
+describe("SelectNodeUseCase", () => {
+  it("should update state and publish event", () => {
     const mockStateManager = MockFactories.createStateManager();
     const mockEventBus = MockFactories.createEventBus();
     const useCase = new SelectNodeUseCase(mockStateManager, mockEventBus);
 
-    useCase.execute('node-123');
+    useCase.execute("node-123");
 
-    expect(mockStateManager.selectNode).toHaveBeenCalledWith('node-123');
+    expect(mockStateManager.selectNode).toHaveBeenCalledWith("node-123");
     expect(mockEventBus.publish).toHaveBeenCalledWith(
       expect.any(NodeSelectedEvent)
     );
@@ -655,11 +525,13 @@ describe('SelectNodeUseCase', () => {
 **Goal**: Extract rendering logic into clean implementations
 
 #### Task 3.1: Extract D3TreeRenderer
+
 ```typescript
 // /app/src/infrastructure/renderers/d3-tree.renderer.ts
 export class D3TreeRenderer implements ITreeRenderer {
   private d3: typeof d3;
-  private svg: d3.Selection<SVGGElement, unknown, null, undefined> | null = null;
+  private svg: d3.Selection<SVGGElement, unknown, null, undefined> | null =
+    null;
 
   constructor(d3Instance: typeof d3) {
     this.d3 = d3Instance;
@@ -675,23 +547,31 @@ export class D3TreeRenderer implements ITreeRenderer {
   }
 
   highlightNode(nodeId: string): void {
-    this.svg?.selectAll('.node')
-      .classed('selected', (d: any) => d.data.id === nodeId);
+    this.svg
+      ?.selectAll(".node")
+      .classed("selected", (d: any) => d.data.id === nodeId);
   }
 
   destroy(): void {
-    this.svg?.selectAll('*').remove();
+    this.svg?.selectAll("*").remove();
     this.svg = null;
   }
 
   // Private helper methods (extracted from old code)
-  private createSvg(container: HTMLElement): void { /* ... */ }
-  private renderTree(data: EnrichedNode): void { /* ... */ }
-  private attachClickHandlers(onClick: (id: string) => void): void { /* ... */ }
+  private createSvg(container: HTMLElement): void {
+    /* ... */
+  }
+  private renderTree(data: EnrichedNode): void {
+    /* ... */
+  }
+  private attachClickHandlers(onClick: (id: string) => void): void {
+    /* ... */
+  }
 }
 ```
 
 #### Task 3.2: Replace Renderer Implementation
+
 ```typescript
 // Replace tree-renderer.js with new clean implementation
 // OLD: /app/src/visualization/tree-renderer.js
@@ -720,6 +600,7 @@ renderer.render({
 **Goal**: Replace monolithic main.js with controllers
 
 #### Task 4.1: Create VisualizationController
+
 ```typescript
 // /app/src/presentation/controllers/visualization.controller.ts
 export class VisualizationController {
@@ -736,7 +617,7 @@ export class VisualizationController {
     this.renderVisualizationUseCase.execute(dto);
   }
 
-  handleViewToggle(viewType: 'graph' | 'grid'): void {
+  handleViewToggle(viewType: "graph" | "grid"): void {
     this.toggleViewUseCase.execute(viewType);
   }
 
@@ -750,7 +631,7 @@ export class VisualizationController {
     return {
       treeData: data.treeData,
       planData: data.planData,
-      criticalPath: data.criticalPath
+      criticalPath: data.criticalPath,
     };
   }
 }
@@ -761,12 +642,13 @@ export class VisualizationController {
 **Strategy:** Migrate main.js piece by piece, committing working code at each step
 
 **Step 1:** Extract sidebar logic (commit when working)
+
 ```typescript
 // Create SidebarController
 class SidebarController {
   constructor(private toggleSidebarUseCase: ToggleSidebarUseCase) {}
 
-  toggle(side: 'left' | 'right'): void {
+  toggle(side: "left" | "right"): void {
     this.toggleSidebarUseCase.execute(side);
   }
 }
@@ -779,6 +661,7 @@ const sidebarController = new SidebarController(toggleSidebarUseCase);
 ```
 
 **Step 2:** Extract view toggle logic (commit when working)
+
 ```typescript
 // Create ViewToggleController
 class ViewToggleController {
@@ -789,6 +672,7 @@ class ViewToggleController {
 ```
 
 **Step 3:** Extract visualization rendering (commit when working)
+
 ```typescript
 // Create VisualizationController
 class VisualizationController {
@@ -799,6 +683,7 @@ class VisualizationController {
 ```
 
 **Step 4:** Wire everything together with DI container
+
 ```typescript
 // Bootstrap application
 const app = bootstrapApplication();
@@ -816,21 +701,23 @@ app.initialize(visualizationData);
 **Goal**: Complete testing, remove legacy code, celebrate! 🎉
 
 #### Task 5.1: Comprehensive Testing
+
 ```typescript
-describe('VisualizationController E2E', () => {
-  it('should render graph view and handle node selection', () => {
+describe("VisualizationController E2E", () => {
+  it("should render graph view and handle node selection", () => {
     const controller = bootstrapApplication();
 
     controller.initialize(mockData);
-    controller.handleNodeClick('node-123');
+    controller.handleNodeClick("node-123");
 
     expect(nodeDetailsComponent.isVisible()).toBe(true);
-    expect(nodeDetailsComponent.getNodeId()).toBe('node-123');
+    expect(nodeDetailsComponent.getNodeId()).toBe("node-123");
   });
 });
 ```
 
 #### Task 5.2: Remove Legacy Code
+
 ```bash
 # Delete old files
 rm app/src/main.js
@@ -852,31 +739,35 @@ rm app/src/ui/node-details.js
 
 ```typescript
 // ✅ CORRECT: Outer layers depend on inner layers
-class VisualizationController {           // Presentation Layer
+class VisualizationController {
+  // Presentation Layer
   constructor(
-    private useCase: RenderVisualizationUseCase  // Application Layer
+    private useCase: RenderVisualizationUseCase // Application Layer
   ) {}
 }
 
-class RenderVisualizationUseCase {        // Application Layer
+class RenderVisualizationUseCase {
+  // Application Layer
   constructor(
-    private renderer: ITreeRenderer       // Domain Interface
+    private renderer: ITreeRenderer // Domain Interface
   ) {}
 }
 
-class D3TreeRenderer implements ITreeRenderer {  // Infrastructure Layer
+class D3TreeRenderer implements ITreeRenderer {
+  // Infrastructure Layer
   // Implements domain interface
 }
 
 // ❌ WRONG: Inner layer depends on outer layer
 class RenderVisualizationUseCase {
   constructor(
-    private controller: VisualizationController  // BAD! Use case depends on controller
+    private controller: VisualizationController // BAD! Use case depends on controller
   ) {}
 }
 ```
 
 **Why it matters:**
+
 - Domain logic remains pure and testable
 - Can swap infrastructure without changing business logic
 - Changes to UI don't ripple into domain
@@ -888,28 +779,44 @@ class RenderVisualizationUseCase {
 ```typescript
 // ❌ WRONG: Multiple responsibilities
 class VisualizationManager {
-  renderTree() { /* D3 rendering */ }
-  saveState() { /* localStorage */ }
-  calculateMetrics() { /* business logic */ }
-  formatNodeDetails() { /* presentation */ }
+  renderTree() {
+    /* D3 rendering */
+  }
+  saveState() {
+    /* localStorage */
+  }
+  calculateMetrics() {
+    /* business logic */
+  }
+  formatNodeDetails() {
+    /* presentation */
+  }
 }
 // Changes to ANY of these concerns requires changing this class!
 
 // ✅ CORRECT: Single responsibilities
 class D3TreeRenderer {
-  renderTree() { /* Only changes when D3 rendering changes */ }
+  renderTree() {
+    /* Only changes when D3 rendering changes */
+  }
 }
 
 class LocalStorageAdapter {
-  saveState() { /* Only changes when persistence mechanism changes */ }
+  saveState() {
+    /* Only changes when persistence mechanism changes */
+  }
 }
 
 class MetricCalculator {
-  calculateMetrics() { /* Only changes when metric formulas change */ }
+  calculateMetrics() {
+    /* Only changes when metric formulas change */
+  }
 }
 
 class NodeDetailsViewModel {
-  formatNodeDetails() { /* Only changes when presentation format changes */ }
+  formatNodeDetails() {
+    /* Only changes when presentation format changes */
+  }
 }
 ```
 
@@ -920,7 +827,7 @@ class NodeDetailsViewModel {
 ```typescript
 // ❌ WRONG: Depends on concrete implementation
 class RenderVisualizationUseCase {
-  private renderer = new D3TreeRenderer(d3);  // Tightly coupled to D3
+  private renderer = new D3TreeRenderer(d3); // Tightly coupled to D3
 
   execute(data: VisualizationDTO): void {
     this.renderer.render(data);
@@ -929,7 +836,7 @@ class RenderVisualizationUseCase {
 
 // ✅ CORRECT: Depends on abstraction
 class RenderVisualizationUseCase {
-  constructor(private renderer: ITreeRenderer) {}  // Can be any implementation
+  constructor(private renderer: ITreeRenderer) {} // Can be any implementation
 
   execute(data: VisualizationDTO): void {
     this.renderer.render(data);
@@ -939,10 +846,11 @@ class RenderVisualizationUseCase {
 // Can now inject different implementations:
 new RenderVisualizationUseCase(new D3TreeRenderer(d3));
 new RenderVisualizationUseCase(new CanvasTreeRenderer());
-new RenderVisualizationUseCase(new MockTreeRenderer());  // For testing!
+new RenderVisualizationUseCase(new MockTreeRenderer()); // For testing!
 ```
 
 **Benefits:**
+
 - Easy to test (inject mocks)
 - Easy to swap implementations
 - Loose coupling
@@ -962,13 +870,23 @@ interface IRenderer {
 }
 
 class SimpleTreeRenderer implements IRenderer {
-  renderTree(data: TreeData): void { /* implement */ }
+  renderTree(data: TreeData): void {
+    /* implement */
+  }
 
   // Forced to implement things we don't need!
-  renderGrid(data: GridData): void { throw new Error('Not supported'); }
-  renderChart(data: ChartData): void { throw new Error('Not supported'); }
-  exportPDF(): void { throw new Error('Not supported'); }
-  exportCSV(): void { throw new Error('Not supported'); }
+  renderGrid(data: GridData): void {
+    throw new Error("Not supported");
+  }
+  renderChart(data: ChartData): void {
+    throw new Error("Not supported");
+  }
+  exportPDF(): void {
+    throw new Error("Not supported");
+  }
+  exportCSV(): void {
+    throw new Error("Not supported");
+  }
 }
 
 // ✅ CORRECT: Segregated interfaces
@@ -986,7 +904,9 @@ interface IExporter {
 }
 
 class SimpleTreeRenderer implements ITreeRenderer {
-  renderTree(data: TreeData): void { /* implement only what we need */ }
+  renderTree(data: TreeData): void {
+    /* implement only what we need */
+  }
 }
 ```
 
@@ -1000,13 +920,13 @@ interface ITreeRenderer {
   render(config: TreeRenderConfig): void;
 }
 
-class D3TreeRenderer implements ITreeRenderer { }
-class CanvasTreeRenderer implements ITreeRenderer { }
-class WebGLTreeRenderer implements ITreeRenderer { }  // NEW! No existing code modified
+class D3TreeRenderer implements ITreeRenderer {}
+class CanvasTreeRenderer implements ITreeRenderer {}
+class WebGLTreeRenderer implements ITreeRenderer {} // NEW! No existing code modified
 
 // Use case doesn't change
 class RenderVisualizationUseCase {
-  constructor(private renderer: ITreeRenderer) {}  // Works with any renderer
+  constructor(private renderer: ITreeRenderer) {} // Works with any renderer
 }
 ```
 
@@ -1017,9 +937,10 @@ class RenderVisualizationUseCase {
 ### Example 1: Node Selection Flow
 
 #### Current Implementation (Problematic)
+
 ```javascript
 // In tree-renderer.js
-node.on('click', function(event, d) {
+node.on("click", function (event, d) {
   // Direct state mutation
   appState.selectedNode = d.data;
 
@@ -1027,8 +948,8 @@ node.on('click', function(event, d) {
   populateNodeDetails(d.data, hljs);
 
   // Direct DOM manipulation
-  d3.selectAll('.node').classed('selected', false);
-  d3.select(this).classed('selected', true);
+  d3.selectAll(".node").classed("selected", false);
+  d3.select(this).classed("selected", true);
 
   // Direct persistence
   saveState(appState);
@@ -1036,12 +957,14 @@ node.on('click', function(event, d) {
 ```
 
 **Problems:**
+
 - Tight coupling to global state
 - Cannot test without DOM
 - Cannot reuse logic
 - Violates Single Responsibility
 
 #### Target Implementation (CLEAN)
+
 ```typescript
 // 1. PRESENTATION: Controller handles user event
 class VisualizationController {
@@ -1068,7 +991,7 @@ class ViewStateManager {
   private state: VisualizationStateEntity;
 
   selectNode(nodeId: string): void {
-    this.state = this.state.selectNode(nodeId);  // Immutable update
+    this.state = this.state.selectNode(nodeId); // Immutable update
     this.eventBus.publish(new StateChangedEvent(this.state.getState()));
   }
 }
@@ -1087,6 +1010,7 @@ eventBus.subscribe(NodeSelectedEvent, (event) => {
 ```
 
 **Benefits:**
+
 - Each piece testable in isolation
 - Can add new reactions without modifying existing code
 - Clear separation of concerns
@@ -1094,24 +1018,37 @@ eventBus.subscribe(NodeSelectedEvent, (event) => {
 ### Example 2: View Toggle Flow
 
 #### Current Implementation
+
 ```javascript
 // In main.js
 function handleViewChange() {
   const view = document.querySelector('input[name="view"]:checked').value;
   appState.currentView = view;
 
-  if (view === 'graph') {
-    document.getElementById('tree-container').style.display = 'flex';
-    document.getElementById('grid-container').style.display = 'none';
-    document.querySelector('.zoom-controls').style.display = 'flex';
-    renderTree(d3, appState.treeData, appState, toggleSidebar,
-               populateNodeDetails, saveState, appState.criticalPath);
+  if (view === "graph") {
+    document.getElementById("tree-container").style.display = "flex";
+    document.getElementById("grid-container").style.display = "none";
+    document.querySelector(".zoom-controls").style.display = "flex";
+    renderTree(
+      d3,
+      appState.treeData,
+      appState,
+      toggleSidebar,
+      populateNodeDetails,
+      saveState,
+      appState.criticalPath
+    );
   } else {
-    document.getElementById('tree-container').style.display = 'none';
-    document.getElementById('grid-container').style.display = 'flex';
-    document.querySelector('.zoom-controls').style.display = 'none';
-    renderGridView(appState.treeData, appState.planData,
-                   appState.rootCost, appState.rootTime, populateNodeDetails);
+    document.getElementById("tree-container").style.display = "none";
+    document.getElementById("grid-container").style.display = "flex";
+    document.querySelector(".zoom-controls").style.display = "none";
+    renderGridView(
+      appState.treeData,
+      appState.planData,
+      appState.rootCost,
+      appState.rootTime,
+      populateNodeDetails
+    );
   }
 
   saveState(appState);
@@ -1119,6 +1056,7 @@ function handleViewChange() {
 ```
 
 #### Target Implementation
+
 ```typescript
 // PRESENTATION: Controller
 class VisualizationController {
@@ -1152,7 +1090,7 @@ class RenderVisualizationUseCase {
   execute(): void {
     const state = this.stateManager.getState();
 
-    if (state.currentView === 'graph') {
+    if (state.currentView === "graph") {
       this.renderGraphView();
     } else {
       this.renderGridView();
@@ -1160,20 +1098,21 @@ class RenderVisualizationUseCase {
   }
 
   private renderGraphView(): void {
-    this.uiManager.showContainer('tree');
-    this.uiManager.hideContainer('grid');
+    this.uiManager.showContainer("tree");
+    this.uiManager.hideContainer("grid");
     this.uiManager.showZoomControls();
 
     this.treeRenderer.render({
       treeData: this.stateManager.getTreeData(),
-      container: this.uiManager.getContainer('tree'),
-      onNodeClick: (id) => this.selectNodeUseCase.execute(id)
+      container: this.uiManager.getContainer("tree"),
+      onNodeClick: (id) => this.selectNodeUseCase.execute(id),
     });
   }
 }
 ```
 
 **Benefits:**
+
 - Testable (inject mock renderers)
 - Single responsibility per class
 - Easy to add new view types
@@ -1181,37 +1120,41 @@ class RenderVisualizationUseCase {
 ### Example 3: Node Details Display
 
 #### Current Implementation
+
 ```javascript
 // 218 lines of string concatenation
 export function populateNodeDetails(node, hljs) {
-  let content = '';
+  let content = "";
 
-  content += '<div class="detail-title">' + node.name + '</div>';
+  content += '<div class="detail-title">' + node.name + "</div>";
 
   if (node.details.relation) {
     content += '<div class="detail-section">';
     content += '<div class="detail-section-title">Table Info</div>';
     content += '<div class="detail-item">';
     content += '<span class="detail-label">Table:</span>';
-    content += '<span class="detail-value">' + node.details.relation + '</span>';
-    content += '</div>';
+    content +=
+      '<span class="detail-value">' + node.details.relation + "</span>";
+    content += "</div>";
     // ... 200 more lines
   }
 
   // Business logic in presentation!
   if (node.details.sharedHitBlocks > 0) {
     const hitRate = (
-      node.details.sharedHitBlocks /
-      (node.details.sharedHitBlocks + node.details.sharedReadBlocks) * 100
+      (node.details.sharedHitBlocks /
+        (node.details.sharedHitBlocks + node.details.sharedReadBlocks)) *
+      100
     ).toFixed(1);
-    content += '<div>Cache Hit Rate: ' + hitRate + '%</div>';
+    content += "<div>Cache Hit Rate: " + hitRate + "%</div>";
   }
 
-  document.getElementById('node-details').innerHTML = content;
+  document.getElementById("node-details").innerHTML = content;
 }
 ```
 
 #### Target Implementation
+
 ```typescript
 // PRESENTATION: ViewModel (presentation logic)
 class NodeDetailsViewModel {
@@ -1226,7 +1169,7 @@ class NodeDetailsViewModel {
     return {
       schema: this.node.details.schema,
       table: this.node.details.relation,
-      alias: this.node.details.alias
+      alias: this.node.details.alias,
     };
   }
 
@@ -1242,7 +1185,7 @@ class NodeDetailsViewModel {
     return {
       cost: this.formatCost(this.node.details.cost),
       time: this.formatTime(this.node.details.actualTime),
-      rows: this.node.details.actualRows
+      rows: this.node.details.actualRows,
     };
   }
 }
@@ -1257,9 +1200,13 @@ class NodeDetailsComponent {
   render(viewModel: NodeDetailsViewModel): void {
     const template = `
       <div class="detail-title">${viewModel.title}</div>
-      ${viewModel.tableInfo ? this.renderTableInfo(viewModel.tableInfo) : ''}
+      ${viewModel.tableInfo ? this.renderTableInfo(viewModel.tableInfo) : ""}
       ${this.renderMetrics(viewModel.metrics)}
-      ${viewModel.cacheHitRate ? this.renderCacheHitRate(viewModel.cacheHitRate) : ''}
+      ${
+        viewModel.cacheHitRate
+          ? this.renderCacheHitRate(viewModel.cacheHitRate)
+          : ""
+      }
     `;
 
     this.container.innerHTML = template;
@@ -1269,12 +1216,16 @@ class NodeDetailsComponent {
     return `
       <div class="detail-section">
         <div class="detail-section-title">Table Info</div>
-        ${info.schema ? `
+        ${
+          info.schema
+            ? `
           <div class="detail-item">
             <span class="detail-label">Schema:</span>
             <span class="detail-value">${info.schema}</span>
           </div>
-        ` : ''}
+        `
+            : ""
+        }
         <div class="detail-item">
           <span class="detail-label">Table:</span>
           <span class="detail-value">${info.table}</span>
@@ -1295,9 +1246,7 @@ class NodeDetailsComponent {
 
 // PRESENTATION: Controller (orchestration)
 class SidebarController {
-  constructor(
-    private nodeDetailsComponent: NodeDetailsComponent
-  ) {}
+  constructor(private nodeDetailsComponent: NodeDetailsComponent) {}
 
   showNodeDetails(nodeId: string): void {
     const node = this.getNode(nodeId);
@@ -1308,6 +1257,7 @@ class SidebarController {
 ```
 
 **Benefits:**
+
 - ViewModel is testable (no DOM)
 - Business logic separate from display logic
 - Component reusable with different templates
@@ -1319,32 +1269,32 @@ class SidebarController {
 
 ### Code Quality Metrics
 
-| Metric | Current | Target | How to Measure |
-|--------|---------|--------|----------------|
-| **Test Coverage** | 0% | 80%+ | Jest coverage report |
-| **Cyclomatic Complexity** | 15+ | <10 | ESLint complexity rules |
-| **File Size** | 327 lines (main.js) | <100 lines | Line count |
-| **Coupling** | High (7 params) | Low (2-3 params) | Parameter count |
-| **Testability** | Cannot test | 100% testable | Mock/stub ability |
+| Metric                    | Current             | Target           | How to Measure          |
+| ------------------------- | ------------------- | ---------------- | ----------------------- |
+| **Test Coverage**         | 0%                  | 80%+             | Jest coverage report    |
+| **Cyclomatic Complexity** | 15+                 | <10              | ESLint complexity rules |
+| **File Size**             | 327 lines (main.js) | <100 lines       | Line count              |
+| **Coupling**              | High (7 params)     | Low (2-3 params) | Parameter count         |
+| **Testability**           | Cannot test         | 100% testable    | Mock/stub ability       |
 
 ### Business Metrics
 
-| Metric | Goal |
-|--------|------|
-| **Bug Rate** | 50% reduction (fewer regressions) |
+| Metric               | Goal                               |
+| -------------------- | ---------------------------------- |
+| **Bug Rate**         | 50% reduction (fewer regressions)  |
 | **Feature Velocity** | 2x faster (easier to add features) |
-| **Onboarding Time** | 50% faster (clearer architecture) |
-| **Maintenance Time** | 70% reduction (isolated changes) |
+| **Onboarding Time**  | 50% faster (clearer architecture)  |
+| **Maintenance Time** | 70% reduction (isolated changes)   |
 
 ### Migration Metrics
 
-| Week | Legacy Code | New Code | Tests | Risk |
-|------|-------------|----------|-------|------|
-| 0 | 754 lines | 0 lines | 0% | ✅ None |
-| 2 | 754 lines | 500 lines | 20% | ✅ Low |
-| 4 | 600 lines | 1200 lines | 50% | ⚠️ Medium |
-| 6 | 200 lines | 2000 lines | 75% | ⚠️ High |
-| 7 | 0 lines | 2200 lines | 80%+ | ✅ Complete |
+| Week | Legacy Code | New Code   | Tests | Risk        |
+| ---- | ----------- | ---------- | ----- | ----------- |
+| 0    | 754 lines   | 0 lines    | 0%    | ✅ None     |
+| 2    | 754 lines   | 500 lines  | 20%   | ✅ Low      |
+| 4    | 600 lines   | 1200 lines | 50%   | ⚠️ Medium   |
+| 6    | 200 lines   | 2000 lines | 75%   | ⚠️ High     |
+| 7    | 0 lines     | 2200 lines | 80%+  | ✅ Complete |
 
 ---
 
@@ -1355,11 +1305,13 @@ class SidebarController {
 We're transforming from a **monolithic, tightly-coupled codebase** to a **CLEAN, modular architecture**:
 
 **From:**
+
 ```
 main.js (327 lines) → Everything coupled together
 ```
 
 **To:**
+
 ```
 Presentation → Application → Domain → Infrastructure
 (Separated, testable, flexible)
@@ -1423,6 +1375,7 @@ git push origin v3.0.0
 ### The Promise
 
 By following this architecture, you'll have:
+
 - ✅ **Testable** code (80%+ coverage)
 - ✅ **Maintainable** code (< 100 lines per file)
 - ✅ **Flexible** code (swap implementations easily)
@@ -1433,6 +1386,6 @@ By following this architecture, you'll have:
 
 ---
 
-*Last updated: 2025*
-*Version: 1.0*
-*Status: Ready for implementation*
+_Last updated: 2025_
+_Version: 1.0_
+_Status: Ready for implementation_
