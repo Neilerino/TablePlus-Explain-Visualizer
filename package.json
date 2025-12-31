@@ -42,7 +42,7 @@
     "webpack-dev-server": "^5.2.2"
   },
   "dependencies": {
-    "ag-grid-community": "^35.0.0",
+    "@tanstack/table-core": "^8.21.3",
     "d3": "^7.9.0",
     "highlight.js": "^11.11.1"
   }

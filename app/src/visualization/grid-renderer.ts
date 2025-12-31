@@ -1,23 +1,46 @@
 /**
- * Grid Renderer - ag-Grid integration for plan visualization
- * Handles grid initialization, configuration, and interactions
+ * Grid Renderer - TanStack Table integration for plan visualization
+ * Custom dark-themed table with hierarchical display
  */
 
-import { createGrid, GridOptions, RowClickedEvent, GridApi, ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
-import 'ag-grid-community/styles/ag-grid.css';
-import 'ag-grid-community/styles/ag-theme-quartz.css';
+import {
+  createTable,
+  getCoreRowModel,
+  getExpandedRowModel,
+  ColumnDef,
+  Row,
+  Table,
+  TableOptions,
+} from '@tanstack/table-core';
 
 import { GridRowData, GridConfig } from '../../../types/grid';
 import { ViewManager } from '../services/view-manager';
 
-// Register AG Grid modules
-ModuleRegistry.registerModules([AllCommunityModule]);
-
 export class GridRenderer {
   private container: HTMLElement;
   private viewManager: ViewManager;
-  private gridApi: GridApi | null = null;
+  private table: Table<GridRowData> | null = null;
   private onNodeSelect: ((rowData: GridRowData) => void) | null = null;
+  private tableState: any = {
+    expanded: {},
+    columnPinning: {
+      left: [],
+      right: []
+    },
+    columnSizing: {},
+    columnSizingInfo: {},
+    columnVisibility: {},
+    columnOrder: [],
+    sorting: [],
+    grouping: [],
+    columnFilters: [],
+    globalFilter: undefined,
+    rowSelection: {},
+    pagination: {
+      pageIndex: 0,
+      pageSize: 10
+    }
+  };
 
   constructor(container: HTMLElement, viewManager: ViewManager) {
     this.container = container;
@@ -31,172 +54,299 @@ export class GridRenderer {
     console.log('GridRenderer.render called', { rowDataLength: gridConfig.rowData.length });
     this.onNodeSelect = onNodeSelect;
 
-    const gridOptions: GridOptions = {
-      rowData: gridConfig.rowData,
-      columnDefs: [
-        {
-          field: 'nodeType',
-          headerName: 'Node Type',
-          minWidth: 200,
-          flex: 1,
-          cellRenderer: (params: any) => {
-            const depth = params.data?.depth || 0;
-            const indent = '  '.repeat(depth); // 2 spaces per level
-            const symbol = depth > 0 ? '└─ ' : '';
-            return `${indent}${symbol}${params.value}`;
-          }
+    // Define columns
+    const columns: ColumnDef<GridRowData>[] = [
+      {
+        accessorKey: 'nodeType',
+        header: 'Node Type',
+        size: 250,
+        cell: (info) => {
+          const row = info.row;
+          const depth = row.original.depth || 0;
+          const hasChildren = row.original._node.children && row.original._node.children.length > 0;
+
+          // Create indentation and tree symbols
+          const indent = '  '.repeat(depth);
+          const expandSymbol = hasChildren
+            ? (row.getIsExpanded() ? '▼ ' : '▶ ')
+            : '  ';
+          const treeSymbol = depth > 0 ? '└─ ' : '';
+
+          return `${indent}${expandSymbol}${treeSymbol}${info.getValue()}`;
         },
-        {
-          field: 'table',
-          headerName: 'Table',
-          minWidth: 120
-        },
-        {
-          field: 'alias',
-          headerName: 'Alias',
-          minWidth: 100
-        },
-        {
-          field: 'cost',
-          headerName: 'Cost',
-          minWidth: 100,
-          valueFormatter: (params) => params.value ? params.value.toFixed(2) : 'N/A',
-          cellClass: (params) => this.getCostCellClass(params.value)
-        },
-        {
-          field: 'costPercent',
-          headerName: 'Cost %',
-          minWidth: 100,
-          valueFormatter: (params) => params.value ? `${params.value.toFixed(1)}%` : 'N/A',
-          cellClass: (params) => this.getPercentCellClass(params.value)
-        },
-        {
-          field: 'time',
-          headerName: 'Time (ms)',
-          minWidth: 120,
-          valueFormatter: (params) => params.value ? params.value.toFixed(3) : 'N/A',
-          cellClass: (params) => this.getTimeCellClass(params.value)
-        },
-        {
-          field: 'timePercent',
-          headerName: 'Time %',
-          minWidth: 100,
-          valueFormatter: (params) => params.value ? `${params.value.toFixed(1)}%` : 'N/A',
-          cellClass: (params) => this.getPercentCellClass(params.value)
-        },
-        {
-          field: 'planRows',
-          headerName: 'Rows (Plan)',
-          minWidth: 120,
-          valueFormatter: (params) => params.value ? params.value.toLocaleString() : 'N/A'
-        },
-        {
-          field: 'actualRows',
-          headerName: 'Rows (Actual)',
-          minWidth: 120,
-          valueFormatter: (params) => params.value ? params.value.toLocaleString() : 'N/A'
-        },
-        {
-          field: 'loops',
-          headerName: 'Loops',
-          minWidth: 80
-        },
-        {
-          field: 'keyInfo',
-          headerName: 'Key Info',
-          minWidth: 200,
-          flex: 2
-        }
-      ],
-      animateRows: true,
-      rowSelection: 'single',
-      onRowClicked: (event: RowClickedEvent) => this.handleRowClick(event),
-      defaultColDef: {
-        sortable: true,
-        resizable: true
       },
-      suppressContextMenu: true,
-      rowHeight: 32
-    };
+      {
+        accessorKey: 'table',
+        header: 'Table',
+        size: 120,
+      },
+      {
+        accessorKey: 'alias',
+        header: 'Alias',
+        size: 80,
+      },
+      {
+        accessorKey: 'cost',
+        header: 'Cost',
+        size: 100,
+        cell: (info) => {
+          const value = info.getValue() as number;
+          return value.toFixed(2);
+        },
+      },
+      {
+        accessorKey: 'costPercent',
+        header: 'Cost %',
+        size: 100,
+        cell: (info) => {
+          const value = info.getValue() as number;
+          return `${value.toFixed(1)}%`;
+        },
+      },
+      {
+        accessorKey: 'time',
+        header: 'Time (ms)',
+        size: 120,
+        cell: (info) => {
+          const value = info.getValue() as number;
+          return value.toFixed(3);
+        },
+      },
+      {
+        accessorKey: 'timePercent',
+        header: 'Time %',
+        size: 100,
+        cell: (info) => {
+          const value = info.getValue() as number;
+          return `${value.toFixed(1)}%`;
+        },
+      },
+      {
+        accessorKey: 'planRows',
+        header: 'Rows (Plan)',
+        size: 120,
+        cell: (info) => {
+          const value = info.getValue() as number;
+          return value.toLocaleString();
+        },
+      },
+      {
+        accessorKey: 'actualRows',
+        header: 'Rows (Actual)',
+        size: 120,
+        cell: (info) => {
+          const value = info.getValue() as number;
+          return value.toLocaleString();
+        },
+      },
+      {
+        accessorKey: 'loops',
+        header: 'Loops',
+        size: 80,
+      },
+      {
+        accessorKey: 'keyInfo',
+        header: 'Key Info',
+        size: 200,
+      },
+    ];
 
-    // Clear container and create grid
-    this.container.innerHTML = '';
-    this.container.classList.add('ag-theme-quartz-dark');
+    // Create table instance - cast to any to work around TypeScript issues with TanStack Table Core
+    const tableOptions = {
+      data: gridConfig.rowData,
+      columns,
+      getCoreRowModel: getCoreRowModel(),
+      getExpandedRowModel: getExpandedRowModel(),
+      getSubRows: (row: GridRowData) => {
+        // Return children for expansion
+        const children = row._node.children;
+        if (!children || children.length === 0) return undefined;
 
-    const gridDiv = document.createElement('div');
-    gridDiv.style.width = '100%';
-    gridDiv.style.height = '100%';
-    this.container.appendChild(gridDiv);
+        // Find child rows in the flat data
+        const currentIndex = gridConfig.rowData.findIndex(r => r.id === row.id);
+        const childRows: GridRowData[] = [];
+        const childDepth = row.depth + 1;
 
-    console.log('Creating ag-Grid...', { containerSize: `${this.container.clientWidth}x${this.container.clientHeight}` });
-    this.gridApi = createGrid(gridDiv, gridOptions);
-    console.log('ag-Grid created successfully', { gridApi: !!this.gridApi });
+        // Collect immediate children (next rows with depth = currentDepth + 1)
+        for (let i = currentIndex + 1; i < gridConfig.rowData.length; i++) {
+          const nextRow = gridConfig.rowData[i];
+          if (nextRow.depth < childDepth) break; // Reached sibling or parent
+          if (nextRow.depth === childDepth) {
+            childRows.push(nextRow);
+          }
+        }
+
+        return childRows.length > 0 ? childRows : undefined;
+      },
+      state: this.tableState,
+      onStateChange: (updater: any) => {
+        this.tableState = typeof updater === 'function' ? updater(this.tableState) : updater;
+      },
+      renderFallbackValue: null,
+    } as any;
+
+    this.table = createTable(tableOptions) as Table<GridRowData>;
+
+    // Render the table
+    this.renderTable();
   }
 
   /**
-   * Handle row click - populate node details
+   * Render table HTML
    */
-  private handleRowClick(event: RowClickedEvent): void {
-    if (event.data && this.onNodeSelect) {
-      const rowData = event.data as GridRowData;
-      this.onNodeSelect(rowData);
+  private renderTable(): void {
+    const tableHtml = `
+      <div class="explain-table-container">
+        <table class="explain-table">
+          <thead class="explain-table-head">
+            ${this.renderHeader()}
+          </thead>
+          <tbody class="explain-table-body">
+            ${this.renderRows()}
+          </tbody>
+        </table>
+      </div>
+    `;
 
-      // Update selected node in view manager
-      this.viewManager.selectNode(rowData.id);
+    this.container.innerHTML = tableHtml;
+
+    // Attach event listeners
+    this.attachEventListeners();
+  }
+
+  /**
+   * Render table header
+   */
+  private renderHeader(): string {
+    if (!this.table) return '';
+
+    return this.table.getHeaderGroups().map((headerGroup: any) => `
+      <tr>
+        ${headerGroup.headers.map((header: any) => {
+          const headerValue = typeof header.column.columnDef.header === 'function'
+            ? header.column.columnDef.header(header.getContext())
+            : header.column.columnDef.header;
+          return `<th style="width: ${header.getSize()}px">${headerValue}</th>`;
+        }).join('')}
+      </tr>
+    `).join('');
+  }
+
+  /**
+   * Render table rows
+   */
+  private renderRows(): string {
+    if (!this.table) return '';
+
+    return this.table.getRowModel().rows.map((row: Row<GridRowData>) => {
+      const rowData = row.original;
+
+      return `
+        <tr
+          data-row-id="${rowData.id}"
+          class="explain-table-row ${rowData.depth > 0 ? 'child-row' : 'root-row'}"
+        >
+          ${row.getVisibleCells().map((cell: any) => {
+            // Render cell value
+            const cellValue = typeof cell.column.columnDef.cell === 'function'
+              ? cell.column.columnDef.cell(cell.getContext())
+              : cell.getValue();
+
+            const columnId = cell.column.id;
+            const cellClass = this.getCellClass(columnId, rowData);
+
+            return `<td class="${cellClass}">${cellValue}</td>`;
+          }).join('')}
+        </tr>
+      `;
+    }).join('');
+  }
+
+  /**
+   * Get CSS class for cell based on column and value
+   */
+  private getCellClass(columnId: string, rowData: GridRowData): string {
+    const classes = ['explain-table-cell'];
+
+    // Add color classes for metric columns
+    if (columnId === 'cost') {
+      const cost = rowData.cost;
+      if (cost > 1000) classes.push('cell-red');
+      else if (cost > 100) classes.push('cell-orange');
+      else classes.push('cell-green');
     }
+
+    if (columnId === 'time') {
+      const time = rowData.time;
+      if (time > 1000) classes.push('cell-red');
+      else if (time > 100) classes.push('cell-orange');
+      else classes.push('cell-green');
+    }
+
+    if (columnId === 'costPercent' || columnId === 'timePercent') {
+      const percent = columnId === 'costPercent' ? rowData.costPercent : rowData.timePercent;
+      if (percent > 50) classes.push('cell-red');
+      else if (percent > 10) classes.push('cell-orange');
+      else classes.push('cell-green');
+    }
+
+    return classes.join(' ');
+  }
+
+  /**
+   * Attach event listeners to rows
+   */
+  private attachEventListeners(): void {
+    if (!this.table) return;
+
+    const rows = this.container.querySelectorAll('.explain-table-row');
+
+    rows.forEach((row) => {
+      const rowId = row.getAttribute('data-row-id');
+      if (!rowId || !this.table) return;
+
+      // Find row data
+      const rowData = this.table.options.data.find((r: GridRowData) => r.id === rowId);
+      if (!rowData) return;
+
+      // Click handler
+      row.addEventListener('click', () => {
+        if (this.onNodeSelect) {
+          this.onNodeSelect(rowData);
+        }
+
+        // Update selected state
+        this.viewManager.selectNode(rowData.id);
+
+        // Visual feedback
+        rows.forEach(r => r.classList.remove('selected'));
+        row.classList.add('selected');
+      });
+    });
   }
 
   /**
    * Select a specific row by node ID
    */
   selectNode(nodeId: string): void {
-    if (!this.gridApi) return;
+    const rows = this.container.querySelectorAll('.explain-table-row');
 
-    // Find and select the row
-    this.gridApi.forEachNode((rowNode) => {
-      if (rowNode.data && rowNode.data.id === nodeId) {
-        rowNode.setSelected(true);
-        this.gridApi?.ensureNodeVisible(rowNode, 'middle');
+    rows.forEach((row) => {
+      const rowId = row.getAttribute('data-row-id');
+      if (rowId === nodeId) {
+        row.classList.add('selected');
+        row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       } else {
-        rowNode.setSelected(false);
+        row.classList.remove('selected');
       }
     });
   }
 
   /**
-   * Destroy the grid instance
+   * Destroy the table instance
    */
   destroy(): void {
-    if (this.gridApi) {
-      this.gridApi.destroy();
-      this.gridApi = null;
-    }
-  }
-
-  /**
-   * Get CSS class for cost cells based on threshold
-   */
-  private getCostCellClass(cost: number): string {
-    if (cost > 1000) return 'cell-red';
-    if (cost > 100) return 'cell-orange';
-    return 'cell-green';
-  }
-
-  /**
-   * Get CSS class for time cells based on threshold
-   */
-  private getTimeCellClass(time: number): string {
-    if (time > 1000) return 'cell-red';
-    if (time > 100) return 'cell-orange';
-    return 'cell-green';
-  }
-
-  /**
-   * Get CSS class for percentage cells
-   */
-  private getPercentCellClass(percent: number): string {
-    if (percent > 50) return 'cell-red';
-    if (percent > 10) return 'cell-orange';
-    return 'cell-green';
+    this.table = null;
+    this.container.innerHTML = '';
   }
 }
