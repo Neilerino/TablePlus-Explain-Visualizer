@@ -3,15 +3,26 @@
  * Renders tab-style toggle between graph and grid views
  */
 
-import { ViewManager, ViewType } from '../services/view-manager';
+import { ToggleViewUseCase } from '../application/use-cases/toggle-view.use-case';
+import { ViewStateManager } from '../application/services/view-state-manager';
+import { IEventBus } from '../application/interfaces/i-event-bus';
+import { ViewChangedEvent } from '../application/events/application-events';
+import { ViewType } from '../domain/entities/visualization-state.entity';
 
 /**
  * Render view toggle tabs
  * @param container - DOM element to render into
- * @param viewManager - View manager instance
+ * @param toggleViewUseCase - Use case for toggling views
+ * @param stateManager - State manager for reading current state
+ * @param eventBus - Event bus for subscribing to state changes
  */
-export function renderViewToggle(container: HTMLElement, viewManager: ViewManager): void {
-  const state = viewManager.getState();
+export function renderViewToggle(
+  container: HTMLElement,
+  toggleViewUseCase: ToggleViewUseCase,
+  stateManager: ViewStateManager,
+  eventBus: IEventBus
+): void {
+  const state = stateManager.getState();
 
   const html = `
     <div class="view-tabs">
@@ -43,15 +54,15 @@ export function renderViewToggle(container: HTMLElement, viewManager: ViewManage
   tabs.forEach(tab => {
     tab.addEventListener('click', (e) => {
       const viewType = (e.currentTarget as HTMLElement).getAttribute('data-view') as ViewType;
-      viewManager.switchView(viewType);
+      toggleViewUseCase.execute(viewType);
     });
   });
 
   // Subscribe to view changes to update active state
-  viewManager.subscribe((newState) => {
+  eventBus.subscribe(ViewChangedEvent, (event) => {
     tabs.forEach(tab => {
       const viewType = tab.getAttribute('data-view');
-      if (viewType === newState.currentView) {
+      if (viewType === event.viewType) {
         tab.classList.add('active');
       } else {
         tab.classList.remove('active');

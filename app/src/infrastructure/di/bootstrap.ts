@@ -11,7 +11,7 @@ import { SelectNodeUseCase } from '../../application/use-cases/select-node.use-c
 import { ToggleViewUseCase } from '../../application/use-cases/toggle-view.use-case';
 import { ToggleCriticalPathUseCase } from '../../application/use-cases/toggle-critical-path.use-case';
 import { D3TreeRenderer } from '../renderers/d3-tree.renderer';
-import { GridRenderer } from '../../visualization/grid-renderer';
+import { GridRenderer } from '../renderers/grid-renderer';
 import { VisualizationState } from '../../domain/entities/visualization-state.entity';
 import { VisualizationController } from '../../presentation/controllers/visualization.controller';
 import { SidebarController } from '../../presentation/controllers/sidebar.controller';
@@ -57,14 +57,12 @@ export function bootstrapApplication(d3Instance: any): DIContainer {
     new D3TreeRenderer(container.resolve('d3'))
   );
 
-  container.register('gridRenderer', () => {
-    const viewManager = container.resolve('viewStateManager');
-    // GridRenderer currently uses old ViewManager interface, will be migrated
-    return new GridRenderer(
+  container.register('gridRenderer', () =>
+    new GridRenderer(
       document.getElementById('grid-container')!,
-      viewManager as any
-    );
-  });
+      container.resolve('viewStateManager')
+    )
+  );
 
   // Controllers
   container.registerSingleton('visualizationController', () =>

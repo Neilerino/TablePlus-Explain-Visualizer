@@ -203,11 +203,11 @@ export class D3TreeRenderer implements ITreeRenderer {
 
     // Hover effect
     nodeGroup.selectAll('rect')
-      .on('mouseenter', () => {
-        this.d3.select(this).attr('fill', 'var(--node-bg-hover, #333)');
+      .on('mouseenter', (event: any) => {
+        this.d3.select(event.currentTarget).attr('fill', 'var(--node-bg-hover, #333)');
       })
-      .on('mouseleave', () => {
-        this.d3.select(this).attr('fill', 'var(--node-bg, #2a2a2a)');
+      .on('mouseleave', (event: any) => {
+        this.d3.select(event.currentTarget).attr('fill', 'var(--node-bg, #2a2a2a)');
       });
   }
 

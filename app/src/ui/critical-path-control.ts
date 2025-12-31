@@ -3,15 +3,26 @@
  * Renders toggle checkbox for critical path highlighting in stats panel
  */
 
-import { ViewManager } from '../services/view-manager';
+import { ToggleCriticalPathUseCase } from '../application/use-cases/toggle-critical-path.use-case';
+import { ViewStateManager } from '../application/services/view-state-manager';
+import { IEventBus } from '../application/interfaces/i-event-bus';
+import { CriticalPathToggledEvent } from '../application/events/application-events';
 
 /**
  * Render critical path toggle control
  * @param container - DOM element to render into
- * @param viewManager - View manager instance
+ * @param toggleCriticalPathUseCase - Use case for toggling critical path
+ * @param stateManager - State manager for reading current state
+ * @param eventBus - Event bus for subscribing to state changes
  */
-export function renderCriticalPathControl(container: HTMLElement, viewManager: ViewManager): void {
-  const state = viewManager.getState();
+export function renderCriticalPathControl(
+  container: HTMLElement,
+  toggleCriticalPathUseCase: ToggleCriticalPathUseCase,
+  stateManager: ViewStateManager,
+  eventBus: IEventBus,
+  criticalPathLength: number
+): void {
+  const state = stateManager.getState();
 
   const controlHtml = `
     <div class="critical-path-control">
@@ -23,7 +34,7 @@ export function renderCriticalPathControl(container: HTMLElement, viewManager: V
           ${state.criticalPathEnabled ? 'checked' : ''}
         >
         <span class="critical-path-text">Highlight Critical Path</span>
-        ${state.criticalPath.length > 0 ? `<span class="critical-path-info">(${state.criticalPath.length} nodes)</span>` : ''}
+        ${criticalPathLength > 0 ? `<span class="critical-path-info">(${criticalPathLength} nodes)</span>` : ''}
       </label>
     </div>
   `;
@@ -39,17 +50,16 @@ export function renderCriticalPathControl(container: HTMLElement, viewManager: V
   // Attach event listener
   const checkbox = document.getElementById('criticalPathToggle') as HTMLInputElement;
   if (checkbox) {
-    checkbox.addEventListener('change', (e) => {
-      const enabled = (e.target as HTMLInputElement).checked;
-      viewManager.toggleCriticalPath(enabled);
+    checkbox.addEventListener('change', () => {
+      toggleCriticalPathUseCase.execute();
     });
   }
 
   // Subscribe to state changes
-  viewManager.subscribe((newState) => {
+  eventBus.subscribe(CriticalPathToggledEvent, (event) => {
     const checkbox = document.getElementById('criticalPathToggle') as HTMLInputElement;
-    if (checkbox && checkbox.checked !== newState.criticalPathEnabled) {
-      checkbox.checked = newState.criticalPathEnabled;
+    if (checkbox && checkbox.checked !== event.enabled) {
+      checkbox.checked = event.enabled;
     }
   });
 }
