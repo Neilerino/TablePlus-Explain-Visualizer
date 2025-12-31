@@ -21,6 +21,8 @@ export class GridRenderer {
   private viewManager: ViewManager;
   private table: Table<GridRowData> | null = null;
   private onNodeSelect: ((rowData: GridRowData) => void) | null = null;
+  private gridConfig: GridConfig | null = null;
+  private columns: ColumnDef<GridRowData>[] = [];
   private tableState: any = {
     expanded: true, // Expand all by default
     columnPinning: {
@@ -53,9 +55,10 @@ export class GridRenderer {
   render(gridConfig: GridConfig, onNodeSelect: (rowData: GridRowData) => void): void {
     console.log('GridRenderer.render called', { rowDataLength: gridConfig.rowData.length });
     this.onNodeSelect = onNodeSelect;
+    this.gridConfig = gridConfig;
 
     // Define columns
-    const columns: ColumnDef<GridRowData>[] = [
+    this.columns = [
       {
         accessorKey: 'nodeType',
         header: 'Node Type',
@@ -156,13 +159,26 @@ export class GridRenderer {
       },
     ];
 
-    // Create table instance - cast to any to work around TypeScript issues with TanStack Table Core
+    // Create the table instance
+    this.createTableInstance();
+
+    // Render the table
+    this.renderTable();
+  }
+
+  /**
+   * Create or recreate the table instance with current state
+   */
+  private createTableInstance(): void {
+    if (!this.gridConfig) return;
+
     const tableOptions = {
-      data: gridConfig.rowData,
-      columns,
+      data: this.gridConfig.rowData,
+      columns: this.columns,
       getCoreRowModel: getCoreRowModel(),
       getExpandedRowModel: getExpandedRowModel(),
       getSubRows: (row: GridRowData) => row.subRows, // Simple: just return the subRows property
+      getRowId: (row: GridRowData) => row.id, // Tell TanStack how to identify rows
       state: this.tableState,
       onStateChange: (updater: any) => {
         this.tableState = typeof updater === 'function' ? updater(this.tableState) : updater;
@@ -171,9 +187,6 @@ export class GridRenderer {
     } as any;
 
     this.table = createTable(tableOptions) as Table<GridRowData>;
-
-    // Render the table
-    this.renderTable();
   }
 
   /**
@@ -286,17 +299,31 @@ export class GridRenderer {
 
     // Attach expand button listeners
     const expandButtons = this.container.querySelectorAll('.expand-btn');
+    console.log('Found expand buttons:', expandButtons.length);
     expandButtons.forEach((button) => {
       button.addEventListener('click', (e) => {
         e.stopPropagation(); // Prevent row click
         const rowId = button.getAttribute('data-row-id');
-        if (!rowId || !this.table) return;
+        console.log('Expand button clicked for row:', rowId);
+
+        if (!rowId || !this.table) {
+          console.log('No rowId or table:', { rowId, hasTable: !!this.table });
+          return;
+        }
 
         // Find the row in the table
+        console.log('Available rows:', Object.keys(this.table.getRowModel().rowsById || {}));
         const row = this.table.getRowModel().rowsById[rowId];
+        console.log('Found row:', row?.id, 'canExpand:', row?.getCanExpand(), 'isExpanded:', row?.getIsExpanded());
+
         if (row && row.getCanExpand()) {
+          console.log('Toggling expansion...');
           row.toggleExpanded();
-          // Re-render the table
+          console.log('New expansion state:', row.getIsExpanded());
+          console.log('Table state after toggle:', this.tableState.expanded);
+
+          // Recreate table instance with updated state, then re-render
+          this.createTableInstance();
           this.renderTable();
         }
       });
