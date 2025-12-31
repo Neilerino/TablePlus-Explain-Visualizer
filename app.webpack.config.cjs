@@ -15,10 +15,18 @@ module.exports = {
   module: {
     rules: [
       {
+        test: /\.ts$/,
+        use: 'ts-loader',
+        exclude: /node_modules/
+      },
+      {
         test: /\.css$/,
         use: [MiniCssExtractPlugin.loader, 'css-loader']
       }
     ]
+  },
+  resolve: {
+    extensions: ['.ts', '.js']
   },
   plugins: [
     new HtmlWebpackPlugin({
@@ -31,9 +39,15 @@ module.exports = {
     })
   ],
   devServer: {
-    static: {
-      directory: path.join(__dirname, 'PostgresExplain.tableplusplugin/app/dist'),
-    },
+    static: [
+      {
+        directory: path.join(__dirname, 'PostgresExplain.tableplusplugin/app/dist'),
+      },
+      {
+        directory: path.join(__dirname, 'app'),
+        publicPath: '/',
+      }
+    ],
     compress: true,
     port: 9000,
     hot: true,

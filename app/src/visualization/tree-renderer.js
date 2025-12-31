@@ -5,6 +5,7 @@ import { renderLinks } from './link-renderer.js';
 import { renderNodes } from './node-renderer.js';
 import { setupZoomControls } from './zoom-controls.js';
 import { setupNodeClickHandler } from './interactions.js';
+import { CriticalPathVisualizer } from '../services/critical-path-visualizer.ts';
 
 /**
  * Render the D3 tree visualization
@@ -14,8 +15,9 @@ import { setupNodeClickHandler } from './interactions.js';
  * @param {Function} toggleSidebar - Function to toggle sidebar
  * @param {Function} populateNodeDetails - Function to populate node details
  * @param {Function} saveState - Function to save state
+ * @param {Array} criticalPath - Critical path nodes (optional)
  */
-export function renderTree(d3, treeData, appState, toggleSidebar, populateNodeDetails, saveState) {
+export function renderTree(d3, treeData, appState, toggleSidebar, populateNodeDetails, saveState, criticalPath = []) {
   // Set up dimensions for vertical tree
   const margin = {top: 40, right: 40, bottom: 40, left: 40};
   const container = document.getElementById('tree-container');
@@ -57,4 +59,17 @@ export function renderTree(d3, treeData, appState, toggleSidebar, populateNodeDe
 
   // Setup zoom controls
   setupZoomControls(d3, svgContainer, svg, margin);
+
+  // Always create critical path visualizer (even if disabled initially)
+  if (criticalPath && criticalPath.length > 0) {
+    const visualizer = new CriticalPathVisualizer(d3, svg);
+
+    // Store visualizer in appState for later toggling
+    appState.criticalPathVisualizer = visualizer;
+
+    // Apply highlighting if enabled
+    if (appState.criticalPathEnabled) {
+      visualizer.highlightPath(criticalPath);
+    }
+  }
 }

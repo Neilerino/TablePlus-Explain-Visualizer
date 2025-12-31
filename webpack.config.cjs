@@ -11,6 +11,11 @@ module.exports = {
   module: {
     rules: [
       {
+        test: /\.ts$/,
+        use: 'ts-loader',
+        exclude: /node_modules/
+      },
+      {
         test: /\.css$/,
         use: ['raw-loader'] // Import CSS as string for inline embedding
       },
@@ -21,7 +26,7 @@ module.exports = {
     ]
   },
   resolve: {
-    extensions: ['.js']
+    extensions: ['.ts', '.js']
   },
   mode: 'production',
   devtool: 'source-map', // Helpful for debugging

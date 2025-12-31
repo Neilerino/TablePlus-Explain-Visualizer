@@ -9,7 +9,7 @@
     "build:plugin": "webpack --mode production --config webpack.config.cjs",
     "build:app": "webpack --mode production --config app.webpack.config.cjs",
     "dev": "webpack --mode development --watch --config webpack.config.cjs",
-    "dev:app": "webpack serve --config app.webpack.config.cjs",
+    "dev:app": "npm run build:app && webpack serve --mode development --config app.webpack.config.cjs",
     "clean": "rm -rf dist/* PostgresExplain.tableplusplugin/app/dist/*",
     "prebuild": "npm run clean",
     "postbuild:plugin": "cp dist/explain.js PostgresExplain.tableplusplugin/",
@@ -26,17 +26,23 @@
   "author": "TablePlus",
   "license": "MIT",
   "devDependencies": {
+    "@types/d3": "^7.4.3",
+    "@types/highlight.js": "^9.12.4",
+    "@types/node": "^25.0.3",
     "css-loader": "^6.11.0",
     "esbuild": "^0.27.2",
     "html-webpack-plugin": "^5.6.5",
     "mini-css-extract-plugin": "^2.9.4",
     "raw-loader": "^4.0.2",
     "style-loader": "^4.0.0",
+    "ts-loader": "^9.5.4",
+    "typescript": "^5.9.3",
     "webpack": "^5.89.0",
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^5.2.2"
   },
   "dependencies": {
+    "ag-grid-community": "^35.0.0",
     "d3": "^7.9.0",
     "highlight.js": "^11.11.1"
   }

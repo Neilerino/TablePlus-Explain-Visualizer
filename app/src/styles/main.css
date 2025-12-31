@@ -491,3 +491,198 @@ body {
   dominant-baseline: middle;
   text-anchor: start;
 }
+/* ============================================
+   CRITICAL PATH STYLING
+   ============================================ */
+
+/* Critical path nodes */
+.node.critical-path rect {
+  stroke: #FFD700 !important;
+  stroke-width: 4px !important;
+  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6));
+}
+
+/* Critical path links */
+.link.critical-path {
+  stroke: #FFD700 !important;
+  stroke-width: 3px !important;
+  animation: pulse-path 2s infinite;
+}
+
+/* Pulse animation for critical path edges */
+@keyframes pulse-path {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* ============================================
+   VIEW TOGGLE TABS
+   ============================================ */
+
+.view-toggle-container {
+  margin-bottom: var(--spacing-md);
+  padding: 0 var(--spacing-md);
+}
+
+.view-tabs {
+  display: flex;
+  gap: var(--spacing-xs);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: 4px;
+}
+
+.view-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.view-tab:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.view-tab.active {
+  background: var(--accent-blue);
+  color: white;
+}
+
+.view-tab svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ============================================
+   CRITICAL PATH CONTROL
+   ============================================ */
+
+.critical-path-control {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+}
+
+.critical-path-label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  cursor: pointer;
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.critical-path-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.critical-path-text {
+  flex: 1;
+}
+
+.critical-path-info {
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+/* ============================================
+   GRID CONTAINER
+   ============================================ */
+
+#grid-container {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+#tree-container {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ============================================
+   AG-GRID CUSTOMIZATION
+   ============================================ */
+
+/* Cell color indicators */
+.ag-theme-quartz-dark .cell-green {
+  color: var(--accent-green);
+  font-weight: 500;
+}
+
+.ag-theme-quartz-dark .cell-orange {
+  color: var(--accent-orange);
+  font-weight: 500;
+}
+
+.ag-theme-quartz-dark .cell-red {
+  color: var(--accent-red);
+  font-weight: 600;
+}
+
+/* Grid customization for dark theme */
+.ag-theme-quartz-dark {
+  --ag-background-color: var(--bg-primary);
+  --ag-foreground-color: var(--text-primary);
+  --ag-border-color: var(--border-color);
+  --ag-header-background-color: var(--bg-secondary);
+  --ag-odd-row-background-color: var(--bg-secondary);
+  --ag-row-hover-color: var(--bg-tertiary);
+  --ag-selected-row-background-color: rgba(0, 122, 204, 0.2);
+}
+
+.ag-theme-quartz-dark .ag-root-wrapper {
+  border: none;
+}
+
+.ag-theme-quartz-dark .ag-header {
+  border-bottom: 2px solid var(--border-color);
+}
+
+.ag-theme-quartz-dark .ag-header-cell {
+  font-weight: 600;
+  color: var(--text-bright);
+}
+
+.ag-theme-quartz-dark .ag-row {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.ag-theme-quartz-dark .ag-cell {
+  line-height: 30px;
+  font-size: 12px;
+}
+
+/* ============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================ */
+
+@media (max-width: 1200px) {
+  .view-tabs {
+    flex-direction: column;
+  }
+
+  .view-tab {
+    justify-content: flex-start;
+  }
+}

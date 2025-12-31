@@ -48,16 +48,19 @@ export function runExplain(context) {
         }
 
         const planData = parsed.data;
-        const treeData = transformToD3Tree(planData);
+        const transformedData = transformToD3Tree(planData);
 
-        // Load webView and pass data
+        // Load webView and pass enhanced data
         const webViewPath = 'app/dist/index.html';
         const webView = adapter.loadWebView(webViewPath);
 
         adapter.sendDataToWebView(webView, {
           query: query,
           planData: planData,
-          treeData: treeData
+          treeData: transformedData.tree,
+          criticalPath: transformedData.criticalPath,
+          rootCost: transformedData.rootCost,
+          rootTime: transformedData.rootTime
         });
 
       } catch (error) {
