@@ -292,6 +292,22 @@ export class GridRenderer {
   }
 
   /**
+   * Find row data by ID, searching recursively through the hierarchy
+   */
+  private findRowData(rowId: string, rows: GridRowData[] = this.gridConfig?.rowData || []): GridRowData | null {
+    for (const row of rows) {
+      if (row.id === rowId) {
+        return row;
+      }
+      if (row.subRows) {
+        const found = this.findRowData(rowId, row.subRows);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
+  /**
    * Attach event listeners to rows
    */
   private attachEventListeners(): void {
@@ -335,12 +351,20 @@ export class GridRenderer {
       const rowId = row.getAttribute('data-row-id');
       if (!rowId || !this.table) return;
 
-      // Find row data
-      const rowData = this.table.options.data.find((r: GridRowData) => r.id === rowId);
-      if (!rowData) return;
+      // Find row data recursively
+      const rowData = this.findRowData(rowId);
+      if (!rowData) {
+        console.warn('Could not find row data for:', rowId);
+        return;
+      }
 
-      // Click handler
-      row.addEventListener('click', () => {
+      // Click handler (but not for expand button clicks)
+      row.addEventListener('click', (e) => {
+        // Don't trigger if clicking the expand button
+        if ((e.target as HTMLElement).classList.contains('expand-btn')) {
+          return;
+        }
+
         if (this.onNodeSelect) {
           this.onNodeSelect(rowData);
         }
