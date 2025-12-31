@@ -22,7 +22,7 @@ export class GridRenderer {
   private table: Table<GridRowData> | null = null;
   private onNodeSelect: ((rowData: GridRowData) => void) | null = null;
   private tableState: any = {
-    expanded: {},
+    expanded: true, // Expand all by default
     columnPinning: {
       left: [],
       right: []
@@ -63,16 +63,21 @@ export class GridRenderer {
         cell: (info) => {
           const row = info.row;
           const depth = row.original.depth || 0;
-          const hasChildren = row.original._node.children && row.original._node.children.length > 0;
+          const canExpand = row.getCanExpand();
+          const isExpanded = row.getIsExpanded();
 
-          // Create indentation and tree symbols
-          const indent = '  '.repeat(depth);
-          const expandSymbol = hasChildren
-            ? (row.getIsExpanded() ? '▼ ' : '▶ ')
-            : '  ';
-          const treeSymbol = depth > 0 ? '└─ ' : '';
+          // Create indentation
+          const indent = '&nbsp;'.repeat(depth * 4); // 4 spaces per level
 
-          return `${indent}${expandSymbol}${treeSymbol}${info.getValue()}`;
+          // Expand/collapse button (only for expandable rows)
+          const expandButton = canExpand
+            ? `<span class="expand-btn" data-row-id="${row.original.id}" style="cursor: pointer; user-select: none; margin-right: 4px;">${isExpanded ? '▼' : '▶'}</span>`
+            : '<span style="margin-right: 4px; opacity: 0;">▶</span>'; // Invisible placeholder for alignment
+
+          // Tree connector symbol
+          const treeSymbol = depth > 0 ? '└─&nbsp;' : '';
+
+          return `${indent}${expandButton}${treeSymbol}${info.getValue()}`;
         },
       },
       {
@@ -157,27 +162,7 @@ export class GridRenderer {
       columns,
       getCoreRowModel: getCoreRowModel(),
       getExpandedRowModel: getExpandedRowModel(),
-      getSubRows: (row: GridRowData) => {
-        // Return children for expansion
-        const children = row._node.children;
-        if (!children || children.length === 0) return undefined;
-
-        // Find child rows in the flat data
-        const currentIndex = gridConfig.rowData.findIndex(r => r.id === row.id);
-        const childRows: GridRowData[] = [];
-        const childDepth = row.depth + 1;
-
-        // Collect immediate children (next rows with depth = currentDepth + 1)
-        for (let i = currentIndex + 1; i < gridConfig.rowData.length; i++) {
-          const nextRow = gridConfig.rowData[i];
-          if (nextRow.depth < childDepth) break; // Reached sibling or parent
-          if (nextRow.depth === childDepth) {
-            childRows.push(nextRow);
-          }
-        }
-
-        return childRows.length > 0 ? childRows : undefined;
-      },
+      getSubRows: (row: GridRowData) => row.subRows, // Simple: just return the subRows property
       state: this.tableState,
       onStateChange: (updater: any) => {
         this.tableState = typeof updater === 'function' ? updater(this.tableState) : updater;
@@ -299,8 +284,26 @@ export class GridRenderer {
   private attachEventListeners(): void {
     if (!this.table) return;
 
-    const rows = this.container.querySelectorAll('.explain-table-row');
+    // Attach expand button listeners
+    const expandButtons = this.container.querySelectorAll('.expand-btn');
+    expandButtons.forEach((button) => {
+      button.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent row click
+        const rowId = button.getAttribute('data-row-id');
+        if (!rowId || !this.table) return;
 
+        // Find the row in the table
+        const row = this.table.getRowModel().rowsById[rowId];
+        if (row && row.getCanExpand()) {
+          row.toggleExpanded();
+          // Re-render the table
+          this.renderTable();
+        }
+      });
+    });
+
+    // Attach row click listeners
+    const rows = this.container.querySelectorAll('.explain-table-row');
     rows.forEach((row) => {
       const rowId = row.getAttribute('data-row-id');
       if (!rowId || !this.table) return;

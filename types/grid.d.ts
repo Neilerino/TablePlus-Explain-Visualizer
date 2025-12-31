@@ -23,7 +23,8 @@ export interface GridRowData {
 
   // For hierarchy display
   path: string[];
-  depth: number; // For indentation in flat mode
+  depth: number; // For indentation
+  subRows?: GridRowData[]; // Child rows for hierarchical display
 
   // Reference to original node
   _node: EnrichedNode;

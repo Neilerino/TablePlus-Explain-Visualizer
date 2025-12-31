@@ -21,10 +21,8 @@ export class GridAdapter {
 
     console.log('Root metrics:', { rootCost, rootTime });
 
-    const rowData: GridRowData[] = [];
-
-    // Flatten tree to array of rows with depth for indentation
-    const flattenTree = (node: EnrichedNode, depth: number = 0): void => {
+    // Create hierarchical structure with subRows
+    const createGridRow = (node: EnrichedNode, depth: number = 0): GridRowData => {
       const nodeCost = parseFloat(node.details.cost) || 0;
       const nodeTime = node.details.actualTime !== 'N/A' ? parseFloat(node.details.actualTime) : 0;
 
@@ -36,7 +34,7 @@ export class GridAdapter {
       const keyInfo = GridAdapter.extractKeyInfo(node);
 
       const row: GridRowData = {
-        id: node.id || `node-${rowData.length}`,
+        id: node.id || `node-${Math.random()}`,
         nodeType: node.name,
         table: node.details.relation || '',
         alias: node.details.alias || '',
@@ -48,29 +46,28 @@ export class GridAdapter {
         actualRows: typeof node.details.actualRows === 'number' ? node.details.actualRows : parseInt(String(node.details.actualRows), 10) || 0,
         loops: node.details.loops,
         keyInfo,
-        path: [], // Not used in flat mode
-        depth: depth, // For indentation
-        _node: node
+        path: [],
+        depth: depth,
+        _node: node,
+        subRows: undefined // Will be filled below if there are children
       };
 
-      rowData.push(row);
-
-      // Process children with increased depth
+      // Recursively create child rows
       if (node.children && node.children.length > 0) {
-        node.children.forEach((child) => {
-          flattenTree(child, depth + 1);
-        });
+        row.subRows = node.children.map(child => createGridRow(child, depth + 1));
       }
+
+      return row;
     };
 
-    flattenTree(treeData, 0);
+    const rowData = [createGridRow(treeData, 0)];
 
     console.log('GridAdapter.toGridData complete', { rowCount: rowData.length, sampleRow: rowData[0] });
 
     return {
       rowData,
-      autoGroupColumnDef: undefined, // Not using tree data mode
-      treeData: false, // Use flat mode
+      autoGroupColumnDef: undefined,
+      treeData: false,
       getDataPath: undefined
     };
   }
