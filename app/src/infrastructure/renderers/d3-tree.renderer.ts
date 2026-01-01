@@ -7,6 +7,8 @@
 import { ITreeRenderer, TreeRenderConfig } from '../../application/interfaces/i-tree-renderer';
 import { EnrichedNode } from '../../../../types/plan-data';
 import { CriticalPathVisualizer } from '../../services/critical-path-visualizer';
+import { NodeService } from '../../domain/services/node.service';
+import { NodeRendererFactory } from './node-renderers/node-renderer.factory';
 
 export class D3TreeRenderer implements ITreeRenderer {
   private d3: any;
@@ -15,6 +17,7 @@ export class D3TreeRenderer implements ITreeRenderer {
   private zoom: any = null;
   private criticalPathVisualizer: CriticalPathVisualizer | null = null;
   private currentConfig: TreeRenderConfig | null = null;
+  private nodeService: NodeService | null = null;
 
   // Layout constants
   private readonly MARGIN = { top: 40, right: 40, bottom: 40, left: 40 };
@@ -25,6 +28,13 @@ export class D3TreeRenderer implements ITreeRenderer {
 
   constructor(d3Instance: any) {
     this.d3 = d3Instance;
+  }
+
+  /**
+   * Set the NodeService for accessing typed entities
+   */
+  setNodeService(nodeService: NodeService): void {
+    this.nodeService = nodeService;
   }
 
   render(config: TreeRenderConfig): void {
@@ -158,40 +168,59 @@ export class D3TreeRenderer implements ITreeRenderer {
       .attr('class', 'node')
       .attr('transform', (d: any) => `translate(${d.x - this.NODE_WIDTH / 2},${d.y})`);
 
-    // Node rectangle
+    // Node rectangle (with dynamic height)
     nodeGroup.append('rect')
       .attr('width', this.NODE_WIDTH)
-      .attr('height', this.NODE_HEIGHT)
+      .attr('height', (d: any) => {
+        const nodeId = d.data.id;
+        if (nodeId && this.nodeService) {
+          const entity = this.nodeService.getNode(nodeId);
+          if (entity) {
+            return NodeRendererFactory.getNodeHeight(entity);
+          }
+        }
+        return this.NODE_HEIGHT; // Fallback
+      })
       .attr('rx', 8)
       .attr('fill', 'var(--node-bg, #2a2a2a)')
       .attr('stroke', 'var(--node-border, #444)')
       .attr('stroke-width', 2)
       .style('cursor', 'pointer');
 
-    // Node label (name)
-    nodeGroup.append('text')
-      .attr('x', this.NODE_WIDTH / 2)
-      .attr('y', 25)
-      .attr('text-anchor', 'middle')
-      .attr('fill', 'var(--text-primary, #fff)')
-      .attr('font-size', '14px')
-      .attr('font-weight', 'bold')
-      .text((d: any) => d.data.name)
-      .style('pointer-events', 'none');
+    // Render node text using specialized renderers
+    nodeGroup.each((d: any, i: number, nodes: any) => {
+      const nodeId = d.data.id;
+      if (!nodeId || !this.nodeService) {
+        // Fallback to basic rendering if no NodeService
+        this.renderBasicNodeText(this.d3.select(nodes[i]), d);
+        return;
+      }
 
-    // Node details (cost/time)
-    nodeGroup.append('text')
-      .attr('x', this.NODE_WIDTH / 2)
-      .attr('y', 50)
-      .attr('text-anchor', 'middle')
-      .attr('fill', 'var(--text-secondary, #aaa)')
-      .attr('font-size', '11px')
-      .text((d: any) => {
-        const cost = d.data.details?.cost || '0';
-        const time = d.data.details?.actualTime || 'N/A';
-        return `Cost: ${cost} | Time: ${time}ms`;
-      })
-      .style('pointer-events', 'none');
+      // Get typed entity from NodeService
+      const entity = this.nodeService.getNode(nodeId);
+      if (!entity) {
+        this.renderBasicNodeText(this.d3.select(nodes[i]), d);
+        return;
+      }
+
+      // Use factory to get text lines
+      const lines = NodeRendererFactory.getNodeLines(entity);
+
+      // Render each line
+      const group = this.d3.select(nodes[i]);
+      lines.forEach(line => {
+        group.append('text')
+          .attr('x', this.NODE_WIDTH / 2)
+          .attr('y', line.y)
+          .attr('text-anchor', 'middle')
+          .attr('fill', line.fill || 'var(--text-primary, #fff)')
+          .attr('font-size', `${line.fontSize}px`)
+          .attr('font-weight', line.fontWeight || 'normal')
+          .attr('opacity', line.opacity !== undefined ? line.opacity : 1)
+          .text(line.text)
+          .style('pointer-events', 'none');
+      });
+    });
 
     // Click handler
     nodeGroup.on('click', (event: any, d: any) => {
@@ -281,5 +310,35 @@ export class D3TreeRenderer implements ITreeRenderer {
         this.criticalPathVisualizer.clearHighlight();
       }
     }
+  }
+
+  /**
+   * Fallback rendering for when NodeService is not available
+   */
+  private renderBasicNodeText(group: any, d: any): void {
+    // Node label (name)
+    group.append('text')
+      .attr('x', this.NODE_WIDTH / 2)
+      .attr('y', 25)
+      .attr('text-anchor', 'middle')
+      .attr('fill', 'var(--text-primary, #fff)')
+      .attr('font-size', '14px')
+      .attr('font-weight', 'bold')
+      .text(d.data.name)
+      .style('pointer-events', 'none');
+
+    // Node details (cost/time)
+    group.append('text')
+      .attr('x', this.NODE_WIDTH / 2)
+      .attr('y', 50)
+      .attr('text-anchor', 'middle')
+      .attr('fill', 'var(--text-secondary, #aaa)')
+      .attr('font-size', '11px')
+      .text(() => {
+        const cost = d.data.details?.cost || '0';
+        const time = d.data.details?.actualTime || 'N/A';
+        return `Cost: ${cost} | Time: ${time}ms`;
+      })
+      .style('pointer-events', 'none');
   }
 }

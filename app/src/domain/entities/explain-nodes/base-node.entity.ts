@@ -29,32 +29,32 @@ export abstract class BaseExplainNode {
 
   // Cost & Timing
   get cost(): number {
-    return this.details.cost || 0;
+    return Number(this.details.cost) || 0;
   }
 
   get startupCost(): number {
-    return this.details.startupCost || 0;
+    return Number(this.details.startupCost) || 0;
   }
 
   get actualTime(): number {
-    return this.details.actualTime || 0;
+    return Number(this.details.actualTime) || 0;
   }
 
   get startupTime(): number {
-    return this.details.startupTime || 0;
+    return Number(this.details.startupTime) || 0;
   }
 
   // Rows
   get planRows(): number {
-    return this.details.planRows || 0;
+    return Number(this.details.planRows) || 0;
   }
 
   get actualRows(): number {
-    return this.details.actualRows || 0;
+    return Number(this.details.actualRows) || 0;
   }
 
   get loops(): number {
-    return this.details.loops || 1;
+    return Number(this.details.loops) || 1;
   }
 
   // Estimation accuracy

@@ -94,6 +94,7 @@ function setupApp() {
 
   // 4. Create renderers
   app.treeRenderer = new D3TreeRenderer(d3);
+  app.treeRenderer.setNodeService(app.nodeService); // Enable specialized node rendering
   app.gridRenderer = new GridRenderer(
     document.getElementById('grid-container'),
     app.viewStateManager
