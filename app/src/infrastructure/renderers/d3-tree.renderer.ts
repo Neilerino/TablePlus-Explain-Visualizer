@@ -118,14 +118,14 @@ export class D3TreeRenderer implements ITreeRenderer {
   private renderTree(treeData: EnrichedNode, onNodeClick: (nodeId: string) => void): void {
     if (!this.svg) return;
 
-    const container = this.currentConfig!.container;
-    const containerWidth = container.clientWidth;
-    const containerHeight = container.clientHeight;
-    const width = Math.max(containerWidth, this.MIN_WIDTH) - this.MARGIN.left - this.MARGIN.right;
-    const height = Math.max(containerHeight, this.MIN_HEIGHT) - this.MARGIN.top - this.MARGIN.bottom;
-
-    // Create tree layout
-    const tree = this.d3.tree().size([width, height - this.NODE_HEIGHT]);
+    // Create tree layout with fixed node spacing (not constrained to viewport)
+    // This allows large trees to extend beyond viewport - users can pan/zoom
+    const tree = this.d3.tree()
+      .nodeSize([this.NODE_WIDTH + 50, 120])  // [horizontal spacing, vertical spacing]
+      .separation((a: any, b: any) => {
+        // Extra separation for siblings vs cousins
+        return a.parent === b.parent ? 1 : 1.2;
+      });
 
     // Create hierarchy
     const root = this.d3.hierarchy(treeData);
