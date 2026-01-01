@@ -1,6 +1,7 @@
 /**
  * Grid Renderer - TanStack Table integration for plan visualization
  * Custom dark-themed table with hierarchical display
+ * Implements IGridRenderer interface
  */
 
 import {
@@ -13,12 +14,13 @@ import {
   TableOptions,
 } from '@tanstack/table-core';
 
-import { GridRowData, GridConfig } from '../../../types/grid';
-import { ViewManager } from '../services/view-manager';
+import { GridRowData, GridConfig } from '../../../../types/grid';
+import { ViewStateManager } from '../../application/services/view-state-manager';
+import { IGridRenderer } from '../../application/interfaces/i-grid-renderer';
 
-export class GridRenderer {
+export class GridRenderer implements IGridRenderer {
   private container: HTMLElement;
-  private viewManager: ViewManager;
+  private viewManager: ViewStateManager;
   private table: Table<GridRowData> | null = null;
   private onNodeSelect: ((rowData: GridRowData) => void) | null = null;
   private gridConfig: GridConfig | null = null;
@@ -44,7 +46,7 @@ export class GridRenderer {
     }
   };
 
-  constructor(container: HTMLElement, viewManager: ViewManager) {
+  constructor(container: HTMLElement, viewManager: ViewStateManager) {
     this.container = container;
     this.viewManager = viewManager;
   }
