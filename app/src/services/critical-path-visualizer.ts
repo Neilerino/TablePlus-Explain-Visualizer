@@ -7,11 +7,9 @@ import * as d3 from 'd3';
 import { EnrichedNode } from '../../../types/plan-data';
 
 export class CriticalPathVisualizer {
-  private d3: typeof d3;
   private svg: d3.Selection<SVGGElement, unknown, null, undefined>;
 
-  constructor(d3Instance: typeof d3, svgElement: d3.Selection<SVGGElement, unknown, null, undefined>) {
-    this.d3 = d3Instance;
+  constructor(svgElement: d3.Selection<SVGGElement, unknown, null, undefined>) {
     this.svg = svgElement;
   }
 

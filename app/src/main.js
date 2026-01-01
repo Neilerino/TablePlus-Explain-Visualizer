@@ -11,6 +11,9 @@ import { EventBus } from './infrastructure/events/event-bus.ts';
 import { LocalStorageAdapter } from './infrastructure/persistence/local-storage.adapter.ts';
 import { ViewStateManager } from './application/services/view-state-manager.ts';
 
+// Domain Services
+import { NodeService } from './domain/services/node.service.ts';
+
 // Use Cases
 import { SelectNodeUseCase } from './application/use-cases/select-node.use-case.ts';
 import { ToggleViewUseCase } from './application/use-cases/toggle-view.use-case.ts';
@@ -29,7 +32,6 @@ import { CriticalPathToggleController } from './presentation/controllers/critica
 
 // Components
 import { SidebarComponent } from './presentation/components/sidebar.component.ts';
-import { NodeDetailsComponent } from './presentation/components/node-details.component.ts';
 import { QueryPanelComponent } from './presentation/components/query-panel.component.ts';
 import { StatsPanelComponent } from './presentation/components/stats-panel.component.ts';
 import { ViewToggleComponent } from './presentation/components/view-toggle.component.ts';
@@ -45,6 +47,9 @@ const app = {
   // Infrastructure
   eventBus: null,
   viewStateManager: null,
+
+  // Domain Services
+  nodeService: null,
 
   // Renderers
   treeRenderer: null,
@@ -79,19 +84,22 @@ function setupApp() {
   const stateStore = new LocalStorageAdapter('pgexplain-state');
   app.viewStateManager = new ViewStateManager(app.eventBus, stateStore);
 
-  // 2. Create use cases
+  // 2. Create domain services
+  app.nodeService = new NodeService();
+
+  // 3. Create use cases
   app.selectNodeUseCase = new SelectNodeUseCase(app.viewStateManager);
   app.toggleViewUseCase = new ToggleViewUseCase(app.viewStateManager);
   app.toggleCriticalPathUseCase = new ToggleCriticalPathUseCase(app.viewStateManager);
 
-  // 3. Create renderers
+  // 4. Create renderers
   app.treeRenderer = new D3TreeRenderer(d3);
   app.gridRenderer = new GridRenderer(
     document.getElementById('grid-container'),
     app.viewStateManager
   );
 
-  // 4. Create visualization controller
+  // 5. Create visualization controller
   app.visualizationController = new VisualizationController(
     app.treeRenderer,
     app.gridRenderer,
@@ -102,7 +110,7 @@ function setupApp() {
     app.eventBus
   );
 
-  // 5. Create sidebar components and controllers
+  // 6. Create sidebar components and controllers
   const leftSidebarElement = document.getElementById('leftSidebar');
   const leftSidebarComponent = new SidebarComponent(leftSidebarElement, 'left');
   app.leftSidebarController = new SidebarController(
@@ -119,12 +127,15 @@ function setupApp() {
     () => app.viewStateManager.saveState()
   );
 
-  // 6. Create node details component and controller
+  // 7. Create node details controller (uses factory pattern internally)
   const nodeDetailsElement = document.getElementById('nodeDetails');
-  const nodeDetailsComponent = new NodeDetailsComponent(nodeDetailsElement);
-  app.nodeDetailsController = new NodeDetailsController(nodeDetailsComponent, hljs);
+  app.nodeDetailsController = new NodeDetailsController(
+    nodeDetailsElement,
+    app.nodeService,
+    hljs
+  );
 
-  // 7. Create view toggle component and controller
+  // 8. Create view toggle component and controller
   const viewToggleElement = document.getElementById('viewToggleContainer');
   const viewToggleComponent = new ViewToggleComponent(viewToggleElement);
   app.viewToggleController = new ViewToggleController(
@@ -134,7 +145,7 @@ function setupApp() {
     app.eventBus
   );
 
-  // 8. Create critical path toggle component and controller
+  // 9. Create critical path toggle component and controller
   const statsContainer = document.getElementById('statsContainer');
   const criticalPathComponent = new CriticalPathToggleComponent(statsContainer, 0);
   app.criticalPathToggleController = new CriticalPathToggleController(
@@ -144,15 +155,11 @@ function setupApp() {
     app.eventBus
   );
 
-  // 9. Create display-only panel components
+  // 10. Create display-only panel components
   const queryPanelContainer = document.getElementById('queryPanel');
-  if (queryPanelContainer) {
-    app.queryPanelComponent = new QueryPanelComponent(queryPanelContainer);
-  }
+  app.queryPanelComponent = new QueryPanelComponent(queryPanelContainer);
 
-  if (statsContainer) {
-    app.statsPanelComponent = new StatsPanelComponent(statsContainer);
-  }
+  app.statsPanelComponent = new StatsPanelComponent(statsContainer);
 
   console.log('App setup complete');
 }
@@ -173,6 +180,12 @@ export function renderVisualization(data) {
   const { query, planData, treeData, criticalPath = [] } = data;
 
   console.log('Rendering visualization with data:', { query, planData, treeData, criticalPath });
+
+  // Initialize NodeService with tree data
+  if (app.nodeService && treeData) {
+    app.nodeService.initialize(treeData);
+    console.log('NodeService initialized with', app.nodeService.getNodeCount(), 'nodes');
+  }
 
   // Initialize visualization controller with data (only done once)
   if (!app.visualizationController._initialized) {

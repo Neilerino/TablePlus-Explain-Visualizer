@@ -263,7 +263,7 @@ export class D3TreeRenderer implements ITreeRenderer {
   initializeCriticalPath(criticalPath: EnrichedNode[]): void {
     if (!this.svg || !criticalPath || criticalPath.length === 0) return;
 
-    this.criticalPathVisualizer = new CriticalPathVisualizer(this.d3, this.svg);
+    this.criticalPathVisualizer = new CriticalPathVisualizer(this.svg);
   }
 
   /**
