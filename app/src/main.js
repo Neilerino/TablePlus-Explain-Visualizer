@@ -76,7 +76,7 @@ const app = {
 // ============================================
 // SETUP FUNCTION - Creates everything in one clear place
 // ============================================
-function setupApp() {
+export function setupApp() {
   // 1. Create infrastructure
   app.eventBus = new EventBus();
   const stateStore = new LocalStorageAdapter('pgexplain-state');
@@ -159,10 +159,6 @@ function setupApp() {
   app.queryPanelComponent = new QueryPanelComponent(queryPanelContainer);
 
   app.statsPanelComponent = new StatsPanelComponent(statsContainer);
-}
-
-export function initializeApp() {
-  setupApp();
 }
 
 // ============================================

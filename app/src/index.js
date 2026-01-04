@@ -2,29 +2,18 @@
  * PostgreSQL EXPLAIN Visualizer - Entry Point
  * This file serves as the entry point for the webpack-bundled app
  */
-import { initializeApp, renderVisualization } from './main.js';
+import { initializeApp, setupApp, renderVisualization } from './main.js';
 import { transformToD3Tree } from '../../src/core/transformer/tree-transformer.js';
 import './styles/main.css';
 
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    initializeApp();
-    loadTestDataIfDev();
-  });
-} else {
-  initializeApp();
-  loadTestDataIfDev();
-}
+setupApp();
+loadTestDataIfDev();
 
 window.ExplainViz = window.ExplainViz || {};
 window.ExplainViz.init = function(data) {
   renderVisualization(data);
 };
 
-/**
- * Auto-load test data in development mode
- */
 async function loadTestDataIfDev() {
   // Check if we're in development mode (webpack dev server or file:// protocol)
   const isDev = window.location.hostname === 'localhost' ||
