@@ -772,6 +772,59 @@ body {
 }
 
 /* ============================================
+   CTE-SPECIFIC GRID STYLING
+   ============================================ */
+
+/* CTE Section Headers */
+.explain-table-row.cte-section-header {
+  background: rgba(255, 255, 255, 0.05); /* Subtle lighter background */
+  font-weight: 700;
+  font-size: 13px;
+  border-top: 2px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-bright);
+  cursor: default;
+}
+
+.explain-table-row.cte-section-header:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.explain-table-row.cte-section-header .explain-table-cell {
+  padding: var(--spacing-md) var(--spacing-md);
+}
+
+/* CTE Nodes - no default background, only highlight when clicked */
+.explain-table-row.cte-node {
+  /* No special background by default */
+}
+
+.explain-table-row.cte-node:hover {
+  background: var(--bg-tertiary); /* Same as normal rows */
+}
+
+/* CTE Scan Nodes (nodes that reference CTEs) - no special styling by default */
+.explain-table-row.cte-scan-node {
+  /* No special styling by default - only highlight when clicked */
+}
+
+/* CTE Highlighting (when a CTE Scan or CTE node is clicked) */
+.explain-table-row.cte-highlighted {
+  background: rgba(100, 150, 200, 0.25) !important;
+  border-left: 3px solid rgba(100, 150, 200, 1) !important;
+  animation: cte-pulse 0.5s ease-out;
+}
+
+@keyframes cte-pulse {
+  0% {
+    background: rgba(100, 150, 200, 0.4);
+  }
+  100% {
+    background: rgba(100, 150, 200, 0.25);
+  }
+}
+
+/* ============================================
    RESPONSIVE ADJUSTMENTS
    ============================================ */
 

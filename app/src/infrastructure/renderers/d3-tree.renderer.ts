@@ -122,13 +122,6 @@ export class D3TreeRenderer implements ITreeRenderer {
     // 2. Extract CTE trees from main tree
     const forestLayout = this.cteTreeExtractor.extract(config.treeData, config.cteMetadata);
 
-    console.log('🌲 Forest Layout Extracted:', {
-      mainTreeHasChildren: !!forestLayout.mainTree.children,
-      mainTreeChildCount: forestLayout.mainTree.children?.length || 0,
-      cteTreeCount: forestLayout.cteTrees.length,
-      cteTreeNames: forestLayout.cteTrees.map(t => t.cteName)
-    });
-
     // Store for CTE highlighting
     this.currentForestLayout = forestLayout;
     this.currentCTEMetadata = config.cteMetadata;
@@ -139,14 +132,6 @@ export class D3TreeRenderer implements ITreeRenderer {
       cteName,
       layout: this.layoutEngine.calculateLayout(tree)
     }));
-
-    console.log('📐 Layouts Calculated:', {
-      mainTreeNodeCount: mainLayout.descendants().length,
-      cteLayouts: cteLayouts.map(l => ({
-        name: l.cteName,
-        nodeCount: l.layout.descendants().length
-      }))
-    });
 
     // 4. Calculate forest positioning
     const forestPositioning = this.forestLayoutEngine.calculateForestLayout(mainLayout, cteLayouts);
@@ -170,117 +155,6 @@ export class D3TreeRenderer implements ITreeRenderer {
       forestPositioning,
       forestLayout,
       onNodeClick: config.onNodeClick
-    });
-  }
-
-  /**
-   * Render a tree at a specific offset position
-   */
-  private renderTreeAtOffset(
-    svg: any,
-    layout: any,
-    offsetX: number,
-    offsetY: number,
-    onNodeClick: (nodeId: string) => void,
-    debugLabel?: string
-  ): void {
-    // Apply offset to all nodes FIRST (before rendering)
-    const nodes = layout.descendants();
-
-    if (debugLabel) {
-      console.log(`  📍 ${debugLabel} - Before offset:`, {
-        nodeCount: nodes.length,
-        firstNode: nodes[0] ? { x: nodes[0].x, y: nodes[0].y, id: nodes[0].data?.id } : null
-      });
-    }
-
-    nodes.forEach((node: any) => {
-      node.x += offsetX;
-      node.y += offsetY;
-    });
-
-    if (debugLabel) {
-      console.log(`  📍 ${debugLabel} - After offset:`, {
-        offset: { x: offsetX, y: offsetY },
-        firstNode: nodes[0] ? { x: nodes[0].x, y: nodes[0].y, id: nodes[0].data?.id } : null,
-        lastNode: nodes[nodes.length - 1] ? { x: nodes[nodes.length - 1].x, y: nodes[nodes.length - 1].y } : null
-      });
-    }
-
-    // Now render links and nodes with correct positions
-    this.linkRenderer.renderLinks(svg, layout);
-    this.nodeRenderer.renderNodes(svg, layout, onNodeClick);
-
-    if (debugLabel) {
-      console.log(`  ✅ ${debugLabel} - Rendered ${nodes.length} nodes`);
-    }
-  }
-
-
-  /**
-   * Render labels above each CTE tree with usage count badges
-   */
-  private renderCTELabels(svg: any, forestPositioning: any, normalizeX: number, normalizeY: number): void {
-    if (!this.currentForestLayout) return;
-
-    forestPositioning.cteTrees.forEach((positionedTree: any) => {
-      const bounds = positionedTree.bounds;
-      const x = bounds.minX + positionedTree.offsetX + normalizeX;
-      const y = bounds.minY + positionedTree.offsetY + normalizeY - 30;  // Above tree
-
-      // Count references to this CTE
-      const usageCount = this.currentForestLayout!.cteReferences.filter(
-        ref => ref.cteName === positionedTree.cteName
-      ).length;
-
-      // Background rectangle
-      const label = svg.append('g').attr('class', 'cte-label');
-
-      label.append('rect')
-        .attr('x', x)
-        .attr('y', y - 15)
-        .attr('width', 120)
-        .attr('height', 25)
-        .attr('rx', 4)
-        .attr('fill', 'rgba(100, 150, 200, 0.2)')
-        .attr('stroke', 'rgba(100, 150, 200, 0.5)')
-        .attr('stroke-width', 1);
-
-      // CTE name text
-      label.append('text')
-        .attr('x', x + 10)
-        .attr('y', y)
-        .attr('fill', 'rgba(100, 150, 200, 1)')
-        .attr('font-size', '12px')
-        .attr('font-weight', '600')
-        .text(`CTE: ${positionedTree.cteName}`);
-
-      // Usage count badge (circular badge at top-right)
-      if (usageCount > 0) {
-        const badgeX = x + 115;
-        const badgeY = y - 12;
-        const badgeRadius = 10;
-
-        // Badge circle
-        label.append('circle')
-          .attr('cx', badgeX)
-          .attr('cy', badgeY)
-          .attr('r', badgeRadius)
-          .attr('fill', 'rgba(100, 150, 200, 0.9)')
-          .attr('stroke', '#fff')
-          .attr('stroke-width', 1.5);
-
-        // Badge text
-        label.append('text')
-          .attr('x', badgeX)
-          .attr('y', badgeY + 1)
-          .attr('text-anchor', 'middle')
-          .attr('dominant-baseline', 'middle')
-          .attr('fill', '#fff')
-          .attr('font-size', '10px')
-          .attr('font-weight', 'bold')
-          .text(usageCount);
-      }
     });
   }
 

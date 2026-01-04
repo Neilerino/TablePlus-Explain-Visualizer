@@ -170,7 +170,8 @@ export class VisualizationController {
     // Transform data for grid
     const gridConfig = GridAdapter.toGridData(
       this.visualizationData.treeData,
-      this.visualizationData.planData
+      this.visualizationData.planData,
+      this.visualizationData.cteMetadata
     );
 
     // Render grid

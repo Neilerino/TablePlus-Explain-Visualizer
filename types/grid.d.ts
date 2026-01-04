@@ -2,7 +2,7 @@
  * Type definitions for grid view data structures
  */
 
-import { EnrichedNode } from './plan-data';
+import { EnrichedNode, CTEMetadata } from './plan-data';
 
 /**
  * Grid row data for ag-grid
@@ -32,6 +32,11 @@ export interface GridRowData {
 
   // Reference to original node
   _node: EnrichedNode;
+
+  // CTE-specific fields
+  isCTESection?: boolean; // True if this row is a CTE section header
+  cteName?: string; // The CTE name (for CTE section headers and CTE nodes)
+  isCTENode?: boolean; // True if this row belongs to a CTE tree
 }
 
 /**
@@ -42,4 +47,5 @@ export interface GridConfig {
   autoGroupColumnDef?: any;
   treeData: boolean;
   getDataPath?: (data: GridRowData) => string[];
+  cteMetadata?: CTEMetadata; // CTE metadata for highlighting
 }

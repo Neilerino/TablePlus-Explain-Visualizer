@@ -89,11 +89,27 @@ export class GridRenderer implements IGridRenderer {
         accessorKey: 'table',
         header: 'Table',
         size: 120,
+        cell: (info) => {
+          const row = info.row.original;
+
+          // CTE section headers show nothing
+          if (row.isCTESection) return '';
+
+          return info.getValue();
+        },
       },
       {
         accessorKey: 'alias',
         header: 'Alias',
         size: 80,
+        cell: (info) => {
+          const row = info.row.original;
+
+          // CTE section headers show nothing
+          if (row.isCTESection) return '';
+
+          return info.getValue();
+        },
       },
       {
         accessorKey: 'cost',
@@ -101,6 +117,10 @@ export class GridRenderer implements IGridRenderer {
         size: 150,
         cell: (info) => {
           const row = info.row.original;
+
+          // CTE section headers show nothing
+          if (row.isCTESection) return '';
+
           const totalCost = info.getValue() as number;
           const selfCost = row.selfCost;
 
@@ -118,6 +138,10 @@ export class GridRenderer implements IGridRenderer {
         size: 150,
         cell: (info) => {
           const row = info.row.original;
+
+          // CTE section headers show nothing
+          if (row.isCTESection) return '';
+
           const totalPercent = info.getValue() as number;
           const selfPercent = row.selfCostPercent;
 
@@ -135,6 +159,10 @@ export class GridRenderer implements IGridRenderer {
         size: 170,
         cell: (info) => {
           const row = info.row.original;
+
+          // CTE section headers show nothing
+          if (row.isCTESection) return '';
+
           const totalTime = info.getValue() as number;
           const selfTime = row.selfTime;
 
@@ -152,6 +180,10 @@ export class GridRenderer implements IGridRenderer {
         size: 150,
         cell: (info) => {
           const row = info.row.original;
+
+          // CTE section headers show nothing
+          if (row.isCTESection) return '';
+
           const totalPercent = info.getValue() as number;
           const selfPercent = row.selfTimePercent;
 
@@ -168,6 +200,11 @@ export class GridRenderer implements IGridRenderer {
         header: 'Rows (Plan)',
         size: 120,
         cell: (info) => {
+          const row = info.row.original;
+
+          // CTE section headers show nothing
+          if (row.isCTESection) return '';
+
           const value = info.getValue() as number;
           return value.toLocaleString();
         },
@@ -177,6 +214,11 @@ export class GridRenderer implements IGridRenderer {
         header: 'Rows (Actual)',
         size: 120,
         cell: (info) => {
+          const row = info.row.original;
+
+          // CTE section headers show nothing
+          if (row.isCTESection) return '';
+
           const value = info.getValue() as number;
           return value.toLocaleString();
         },
@@ -185,11 +227,27 @@ export class GridRenderer implements IGridRenderer {
         accessorKey: 'loops',
         header: 'Loops',
         size: 80,
+        cell: (info) => {
+          const row = info.row.original;
+
+          // CTE section headers show nothing
+          if (row.isCTESection) return '';
+
+          return info.getValue();
+        },
       },
       {
         accessorKey: 'keyInfo',
         header: 'Key Info',
         size: 200,
+        cell: (info) => {
+          const row = info.row.original;
+
+          // CTE section headers show nothing
+          if (row.isCTESection) return '';
+
+          return info.getValue();
+        },
       },
     ];
 
@@ -273,10 +331,22 @@ export class GridRenderer implements IGridRenderer {
     return this.table.getRowModel().rows.map((row: Row<GridRowData>) => {
       const rowData = row.original;
 
+      // Determine row CSS classes
+      const rowClasses = ['explain-table-row'];
+      if (rowData.depth > 0) rowClasses.push('child-row');
+      else rowClasses.push('root-row');
+
+      if (rowData.isCTESection) rowClasses.push('cte-section-header');
+      if (rowData.isCTENode) rowClasses.push('cte-node');
+      if (rowData.nodeType === 'CTE Scan') rowClasses.push('cte-scan-node');
+
       return `
         <tr
           data-row-id="${rowData.id}"
-          class="explain-table-row ${rowData.depth > 0 ? 'child-row' : 'root-row'}"
+          data-cte-name="${rowData.cteName || ''}"
+          data-is-cte-scan="${rowData.nodeType === 'CTE Scan' ? 'true' : 'false'}"
+          data-scan-cte-name="${rowData.nodeType === 'CTE Scan' ? rowData._node?.details?.cteName || '' : ''}"
+          class="${rowClasses.join(' ')}"
         >
           ${row.getVisibleCells().map((cell: any) => {
             // Render cell value
@@ -391,9 +461,40 @@ export class GridRenderer implements IGridRenderer {
         // Update selected state
         this.viewManager.selectNode(rowData.id);
 
-        // Visual feedback
-        rows.forEach(r => r.classList.remove('selected'));
+        // Visual feedback - clear previous selections
+        rows.forEach(r => {
+          r.classList.remove('selected');
+          r.classList.remove('cte-highlighted');
+        });
         row.classList.add('selected');
+
+        // CTE highlighting: if this is a CTE Scan node, highlight the corresponding CTE section
+        if (rowData.nodeType === 'CTE Scan' && rowData._node?.details?.cteName) {
+          const targetCTEName = rowData._node.details.cteName;
+          console.log('🔗 CTE Scan clicked:', targetCTEName);
+
+          // Highlight all rows that belong to this CTE
+          rows.forEach(r => {
+            const cteName = r.getAttribute('data-cte-name');
+            if (cteName === targetCTEName) {
+              r.classList.add('cte-highlighted');
+            }
+          });
+        }
+
+        // CTE highlighting: if this is a CTE node, highlight all CTE Scan nodes that reference it
+        if (rowData.isCTENode && rowData.cteName) {
+          const cteName = rowData.cteName;
+          console.log('🌲 CTE node clicked:', cteName);
+
+          // Highlight all CTE Scan nodes that reference this CTE
+          rows.forEach(r => {
+            const scanCteName = r.getAttribute('data-scan-cte-name');
+            if (scanCteName === cteName) {
+              r.classList.add('cte-highlighted');
+            }
+          });
+        }
       });
 
       // Double-click to open sidebar with details
