@@ -238,6 +238,11 @@ body {
   min-height: 44px;
 }
 
+/* Right sidebar button should be on the left (inner) side */
+.right-sidebar .sidebar-header {
+  justify-content: flex-start;
+}
+
 .sidebar.collapsed .sidebar-header {
   border-bottom: none;
 }
@@ -268,6 +273,16 @@ body {
 .left-sidebar.collapsed .collapse-btn {
   position: fixed;
   left: var(--spacing-md);
+  top: 50vh;
+  transform: translateY(-50%);
+  box-shadow: var(--shadow-sm);
+  z-index: 1000;
+}
+
+/* Keep right collapse button visible when sidebar is collapsed */
+.right-sidebar.collapsed .collapse-btn {
+  position: fixed;
+  right: var(--spacing-md);
   top: 50vh;
   transform: translateY(-50%);
   box-shadow: var(--shadow-sm);

@@ -16,7 +16,7 @@ export class SidebarComponent extends Component {
   // Icons for collapse button
   private readonly COLLAPSE_ICON = {
     left: { collapsed: '▶', expanded: '◀' },
-    right: { collapsed: '✕', expanded: '✕' }
+    right: { collapsed: '◀', expanded: '▶' }
   };
 
   constructor(container: HTMLElement, side: SidebarSide) {
