@@ -62,14 +62,11 @@ export class ForestLayoutManager {
     const cteStartY = mainTreeY + mainTreeHeight + 200;
     const cteSpacing = 200;
 
-    // 1. Analyze CTE dependencies and arrange in layers
     const cteLayers = this.dependencyAnalyzer.analyzeDependencies(
       forestPositioning.cteTrees,
       forestLayout.cteReferences
     );
-    console.log('📊 CTE Layers:', cteLayers);
 
-    // 2. Calculate CTE tree positions based on layers
     const cteTreePositions = this.calculateCTEPositions(
       cteLayers,
       forestPositioning.cteTrees,
@@ -78,25 +75,11 @@ export class ForestLayoutManager {
       cteSpacing
     );
 
-    // 3. Calculate canvas size based on actual positions
-    const totalWidth = this.calculateTotalWidth(cteTreePositions, forestPositioning.mainTree.bounds.width);
-    const totalHeight = this.calculateTotalHeight(cteTreePositions, cteStartY);
-
-    console.log('📏 Canvas Layout:', {
-      mainTree: { x: mainTreeX, y: mainTreeY, width: forestPositioning.mainTree.bounds.width, height: mainTreeHeight },
-      cteStart: { x: cteStartX, y: cteStartY },
-      totalDimensions: { width: totalWidth, height: totalHeight },
-      layers: cteLayers.length
-    });
-
-    // 4. Render main tree
     this.renderMainTree(canvas.svg, mainLayout, mainTreeX, mainTreeY, onNodeClick);
 
-    // 5. Render CTE border boxes (background layer)
     const borderRenderer = new CTEBorderRenderer(canvas.svg);
     borderRenderer.renderBorders(cteTreePositions);
 
-    // 6. Render reference links (middle layer, behind nodes)
     const referenceLinksRenderer = new CTEReferenceLinksRenderer(this.d3, canvas.svg);
     referenceLinksRenderer.renderLinks(
       mainLayout,
@@ -107,10 +90,8 @@ export class ForestLayoutManager {
       forestLayout.cteReferences
     );
 
-    // 7. Render CTE trees (top layer)
     this.renderCTETrees(canvas.svg, cteTreePositions, forestPositioning.cteTrees, onNodeClick);
 
-    // 8. Setup interactive controls and center on main tree root
     this.setupInitialView(container, canvas, mainLayout, mainTreeX, mainTreeY);
   }
 
@@ -209,7 +190,6 @@ export class ForestLayoutManager {
     mainTreeY: number,
     onNodeClick: (nodeId: string) => void
   ): void {
-    console.log('🌲 Rendering main tree...');
     const mainTreeGroup = svg.append('g')
       .attr('class', 'main-tree-group')
       .attr('transform', `translate(${mainTreeX}, ${mainTreeY})`);
@@ -227,7 +207,6 @@ export class ForestLayoutManager {
     positionedCTETrees: any[],
     onNodeClick: (nodeId: string) => void
   ): void {
-    console.log('🌳 Rendering CTE trees...');
     ctePositions.forEach((pos, index) => {
       const positionedTree = positionedCTETrees.find(t => t.cteName === pos.cteName);
       if (!positionedTree) return;
@@ -255,22 +234,10 @@ export class ForestLayoutManager {
   ): void {
     this.interactionController.setupZoom(canvas);
 
-    // Get the root node position
     const rootNode = mainLayout;
     const rootX = mainTreeX + (rootNode.layout?.x || 0);
     const rootY = mainTreeY + (rootNode.layout?.y || 0);
 
-    console.log('🎯 Initial View Centering:', {
-      mainTreeX,
-      mainTreeY,
-      rootNodeX: rootNode.layout?.x || 0,
-      rootNodeY: rootNode.layout?.y || 0,
-      finalRootX: rootX,
-      finalRootY: rootY,
-      scale: 1.0
-    });
-
-    // Center view on root node at 100% zoom
     this.interactionController.centerOnPoint(
       container,
       rootX,

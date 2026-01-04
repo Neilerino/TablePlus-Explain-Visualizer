@@ -298,7 +298,6 @@ ORDER BY total_orders DESC;`,
 const planData = rawTestData.planData[0];
 
 // Transform through the pipeline
-console.log('Transforming EXPLAIN data...');
 const transformedData = transformToD3Tree(planData);
 
 // Create final test data matching the format sent to ExplainViz.init()
@@ -314,12 +313,6 @@ const testData = {
 // Write to file
 const outputPath = path.join(__dirname, '../app/test-data-transformed.json');
 fs.writeFileSync(outputPath, JSON.stringify(testData, null, 2));
-
-console.log('✓ Test data generated at:', outputPath);
-console.log('  - Tree nodes:', countNodes(transformedData.tree));
-console.log('  - Critical path length:', transformedData.criticalPath.length);
-console.log('  - Root cost:', transformedData.rootCost);
-console.log('  - Root time:', transformedData.rootTime);
 
 function countNodes(node) {
   let count = 1;

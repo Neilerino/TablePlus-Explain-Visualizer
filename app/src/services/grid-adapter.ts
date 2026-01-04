@@ -16,14 +16,9 @@ export class GridAdapter {
    * @returns Grid configuration with row data and column definitions
    */
   static toGridData(treeData: EnrichedNode, planData: PostgresPlanData, cteMetadata?: CTEMetadata): GridConfig {
-    console.log('GridAdapter.toGridData called', { treeData, planData, hasCTEs: !!cteMetadata });
-
     const rootCost = planData.Plan['Total Cost'] || 0;
     const rootTime = planData.Plan['Actual Total Time'] || 0;
 
-    console.log('Root metrics:', { rootCost, rootTime });
-
-    // Helper function to create a grid row from a node
     const createGridRow = (node: EnrichedNode, depth: number = 0, cteName?: string): GridRowData => {
       const nodeCost = parseFloat(node.details.cost) || 0;
       const nodeTime = node.details.actualTime !== 'N/A' ? parseFloat(node.details.actualTime) : 0;
@@ -84,8 +79,6 @@ export class GridAdapter {
     let rowData: GridRowData[];
 
     if (cteMetadata && cteMetadata.cteDefinitions.size > 0) {
-      console.log('📊 Creating grid with CTE separation...');
-
       // Extract CTE trees from main tree
       const extractor = new CTETreeExtractor();
       const forestLayout = extractor.extract(treeData, cteMetadata);
@@ -127,18 +120,10 @@ export class GridAdapter {
 
         rowData.push(cteHeader);
       });
-
-      console.log('📊 Grid with CTEs created:', {
-        totalSections: rowData.length,
-        mainTree: 1,
-        cteSections: forestLayout.cteTrees.length
-      });
     } else {
       // No CTEs, use original logic
       rowData = [createGridRow(treeData, 0)];
     }
-
-    console.log('GridAdapter.toGridData complete', { rowCount: rowData.length, sampleRow: rowData[0] });
 
     return {
       rowData,

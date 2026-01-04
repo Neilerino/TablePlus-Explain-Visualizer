@@ -57,45 +57,11 @@ export class CTEReferenceLinksRenderer {
       });
     });
 
-    // Debug logging
-    console.log('🔗 Reference Link Debug:', {
-      totalReferences: cteReferences.length,
-      totalNodePositions: nodePositions.size,
-      mainTreeNodes: mainLayout.descendants().length,
-      cteTreeNodes: positionedCTETrees.reduce((sum, t) => sum + t.layout.descendants().length, 0)
-    });
-
-    // Draw reference links with interactive hover effects
-    let successCount = 0;
-    let failCount = 0;
-
     cteReferences.forEach((ref, idx) => {
       const sourcePos = nodePositions.get(ref.nodeId);
       const targetPos = ref.targetCTENodeId ? nodePositions.get(ref.targetCTENodeId) : null;
 
-      if (!sourcePos) {
-        console.warn(`❌ Reference ${idx}: Source node ${ref.nodeId} not found`);
-        failCount++;
-        return;
-      }
-
-      if (!targetPos) {
-        console.warn(`❌ Reference ${idx}: Target node ${ref.targetCTENodeId} (CTE: ${ref.cteName}) not found`);
-        failCount++;
-        return;
-      }
-
       if (sourcePos && targetPos) {
-        successCount++;
-
-        console.log(`🔗 Drawing link #${idx}:`, {
-          cteName: ref.cteName,
-          sourceNodeId: ref.nodeId,
-          targetNodeId: ref.targetCTENodeId,
-          sourcePos: { x: Math.round(sourcePos.x), y: Math.round(sourcePos.y) },
-          targetPos: { x: Math.round(targetPos.x), y: Math.round(targetPos.y) }
-        });
-
         const linkGenerator = this.d3.linkVertical()
           .x((d: any) => d.x)
           .y((d: any) => d.y);
@@ -134,7 +100,5 @@ export class CTEReferenceLinksRenderer {
         });
       }
     });
-
-    console.log(`✅ Reference Links: ${successCount} drawn, ${failCount} failed`);
   }
 }

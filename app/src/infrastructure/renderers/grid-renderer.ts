@@ -55,7 +55,6 @@ export class GridRenderer implements IGridRenderer {
    * Initialize and render the grid
    */
   render(gridConfig: GridConfig, onNodeSelect: (rowData: GridRowData) => void): void {
-    console.log('GridRenderer.render called', { rowDataLength: gridConfig.rowData.length });
     this.onNodeSelect = onNodeSelect;
     this.gridConfig = gridConfig;
 
@@ -471,7 +470,6 @@ export class GridRenderer implements IGridRenderer {
         // CTE highlighting: if this is a CTE Scan node, highlight the corresponding CTE section
         if (rowData.nodeType === 'CTE Scan' && rowData._node?.details?.cteName) {
           const targetCTEName = rowData._node.details.cteName;
-          console.log('🔗 CTE Scan clicked:', targetCTEName);
 
           // Highlight all rows that belong to this CTE
           rows.forEach(r => {
@@ -485,7 +483,6 @@ export class GridRenderer implements IGridRenderer {
         // CTE highlighting: if this is a CTE node, highlight all CTE Scan nodes that reference it
         if (rowData.isCTENode && rowData.cteName) {
           const cteName = rowData.cteName;
-          console.log('🌲 CTE node clicked:', cteName);
 
           // Highlight all CTE Scan nodes that reference this CTE
           rows.forEach(r => {

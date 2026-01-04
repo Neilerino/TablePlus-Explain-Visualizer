@@ -77,8 +77,6 @@ const app = {
 // SETUP FUNCTION - Creates everything in one clear place
 // ============================================
 function setupApp() {
-  console.log('Setting up application...');
-
   // 1. Create infrastructure
   app.eventBus = new EventBus();
   const stateStore = new LocalStorageAdapter('pgexplain-state');
@@ -161,17 +159,10 @@ function setupApp() {
   app.queryPanelComponent = new QueryPanelComponent(queryPanelContainer);
 
   app.statsPanelComponent = new StatsPanelComponent(statsContainer);
-
-  console.log('App setup complete');
 }
 
-// ============================================
-// INITIALIZATION
-// ============================================
 export function initializeApp() {
-  console.log('Initializing PostgreSQL EXPLAIN Visualizer...');
   setupApp();
-  console.log('App initialized successfully');
 }
 
 // ============================================
@@ -179,13 +170,8 @@ export function initializeApp() {
 // ============================================
 export function renderVisualization(data) {
   const { query, planData, treeData, criticalPath = [], cteMetadata } = data;
-
-  console.log('Rendering visualization with data:', { query, planData, treeData, criticalPath, cteMetadata });
-
-  // Initialize NodeService with tree data
   if (app.nodeService && treeData) {
     app.nodeService.initialize(treeData);
-    console.log('NodeService initialized with', app.nodeService.getNodeCount(), 'nodes');
   }
 
   // Initialize visualization controller with data (only done once)
@@ -219,6 +205,4 @@ export function renderVisualization(data) {
   if (hljs) {
     hljs.highlightAll();
   }
-
-  console.log('Visualization rendered successfully');
 }

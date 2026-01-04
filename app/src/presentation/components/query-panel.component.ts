@@ -11,13 +11,7 @@ export class QueryPanelComponent extends Component {
 
   constructor(container: HTMLElement) {
     super(container);
-    // Look for queryCode element within the container, not globally
     this.queryCodeElement = container.querySelector('#queryCode');
-
-    if (!this.queryCodeElement) {
-      console.warn('queryCode element not found in container');
-      console.log('Container:', container);
-    }
   }
 
   /**
