@@ -53,7 +53,8 @@ async function loadTestDataIfDev() {
         treeData: transformedData.tree,
         criticalPath: transformedData.criticalPath,
         rootCost: transformedData.rootCost,
-        rootTime: transformedData.rootTime
+        rootTime: transformedData.rootTime,
+        cteMetadata: transformedData.cteMetadata
       };
 
       console.log('%c[DEV MODE] Test data loaded and transformed', 'color: #4CAF50; font-weight: bold', testData);

@@ -3,12 +3,13 @@
  * Abstraction for rendering query execution plan trees
  */
 
-import { EnrichedNode } from '../../../../types/plan-data';
+import { EnrichedNode, CTEMetadata } from '../../../../types/plan-data';
 
 export interface TreeRenderConfig {
   treeData: EnrichedNode;
   container: HTMLElement;
   onNodeClick: (nodeId: string) => void;
+  cteMetadata?: CTEMetadata;
   dimensions?: {
     width: number;
     height: number;

@@ -74,6 +74,10 @@ export interface PostgresPlanNode {
   // Output (VERBOSE mode)
   'Output'?: string[];
 
+  // CTE info
+  'Subplan Name'?: string;  // For CTE definitions (e.g., "CTE cte_name")
+  'CTE Name'?: string;      // For CTE Scan nodes referencing a CTE
+
   // Child plans
   'Plans'?: PostgresPlanNode[];
 }
@@ -161,6 +165,10 @@ export interface NodeDetails {
   // Output columns
   output: string | null;
 
+  // CTE info
+  subplanName: string | null;  // For CTE definitions (e.g., "CTE cte_name")
+  cteName: string | null;      // For CTE Scan nodes referencing a CTE
+
   // Performance indicators
   estimationAccuracy: number;
   estimationOff: boolean;
@@ -182,6 +190,25 @@ export interface EnrichedNode {
 }
 
 /**
+ * CTE relationship metadata
+ */
+export interface CTEMetadata {
+  // Map of CTE name -> CTE definition info
+  cteDefinitions: Map<string, {
+    cteName: string;
+    rootNodeId: string;
+    rootNode: EnrichedNode;
+  }>;
+
+  // Array of CTE Scan references
+  cteReferences: Array<{
+    nodeId: string;
+    cteName: string;
+    targetCTENodeId: string;
+  }>;
+}
+
+/**
  * Enhanced tree data structure with metadata
  */
 export interface EnhancedTreeData {
@@ -189,6 +216,7 @@ export interface EnhancedTreeData {
   criticalPath: EnrichedNode[];
   rootCost: number;
   rootTime: number;
+  cteMetadata?: CTEMetadata;
 }
 
 /**
@@ -202,4 +230,5 @@ export interface VisualizationData {
   criticalPath?: EnrichedNode[];
   rootCost?: number;
   rootTime?: number;
+  cteMetadata?: CTEMetadata;
 }

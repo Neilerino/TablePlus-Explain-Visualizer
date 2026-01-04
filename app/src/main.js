@@ -178,9 +178,9 @@ export function initializeApp() {
 // RENDER FUNCTION (Called by plugin via window.ExplainViz.render)
 // ============================================
 export function renderVisualization(data) {
-  const { query, planData, treeData, criticalPath = [] } = data;
+  const { query, planData, treeData, criticalPath = [], cteMetadata } = data;
 
-  console.log('Rendering visualization with data:', { query, planData, treeData, criticalPath });
+  console.log('Rendering visualization with data:', { query, planData, treeData, criticalPath, cteMetadata });
 
   // Initialize NodeService with tree data
   if (app.nodeService && treeData) {
@@ -196,7 +196,8 @@ export function renderVisualization(data) {
       treeData,
       planData,
       criticalPath,
-      query
+      query,
+      cteMetadata
     }, onNodeSelect);
   }
 

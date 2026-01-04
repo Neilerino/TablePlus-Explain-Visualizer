@@ -1,6 +1,7 @@
 import { enrichNode } from './node-enricher.js';
 import { determineEdgeLabel } from './edge-labeler.js';
 import { calculateCriticalPath, assignNodeIds } from '../analysis/index.ts';
+import { analyzeCTEs } from './cte-analyzer.js';
 
 export function transformToD3Tree(planData) {
   const tree = processNode(planData.Plan, null);
@@ -11,6 +12,9 @@ export function transformToD3Tree(planData) {
   // Calculate critical path (default: execution time)
   const criticalPath = calculateCriticalPath(tree, 'time');
 
+  // Analyze CTE relationships
+  const cteMetadata = analyzeCTEs(tree);
+
   // Extract root metrics for percentage calculations
   const rootCost = planData.Plan['Total Cost'] || 0;
   const rootTime = planData.Plan['Actual Total Time'] || 0;
@@ -19,7 +23,8 @@ export function transformToD3Tree(planData) {
     tree,
     criticalPath,
     rootCost,
-    rootTime
+    rootTime,
+    cteMetadata
   };
 }
 

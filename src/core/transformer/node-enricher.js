@@ -16,8 +16,9 @@ export function enrichNode(node) {
       actualTime: node['Actual Total Time'] ? node['Actual Total Time'].toFixed(3) : 'N/A',
       startupTime: node['Actual Startup Time'] ? node['Actual Startup Time'].toFixed(3) : 'N/A',
 
-      // CTE Label
-      subplanName: node['Subplan Name'] || null,
+      // CTE info
+      subplanName: node['Subplan Name'] || null,  // For CTE definitions
+      cteName: node['CTE Name'] || null,          // For CTE Scan nodes
 
       // Table/Index info
       relation: node['Relation Name'] || null,

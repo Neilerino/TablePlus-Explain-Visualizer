@@ -11,7 +11,7 @@ import { SelectNodeUseCase } from '../../application/use-cases/select-node.use-c
 import { ToggleViewUseCase } from '../../application/use-cases/toggle-view.use-case';
 import { ToggleCriticalPathUseCase } from '../../application/use-cases/toggle-critical-path.use-case';
 import { ViewChangedEvent, NodeSelectedEvent, CriticalPathToggledEvent } from '../../application/events/application-events';
-import { EnrichedNode, PostgresPlanData } from '../../../../types/plan-data';
+import { EnrichedNode, PostgresPlanData, CTEMetadata } from '../../../../types/plan-data';
 import { GridAdapter } from '../../services/grid-adapter';
 import { ViewType } from '../../domain/entities/visualization-state.entity';
 
@@ -20,6 +20,7 @@ export interface VisualizationData {
   planData: PostgresPlanData;
   criticalPath: EnrichedNode[];
   query: string;
+  cteMetadata?: CTEMetadata;
 }
 
 export class VisualizationController {
@@ -140,6 +141,7 @@ export class VisualizationController {
       treeData: this.visualizationData.treeData,
       container: treeContainer,
       onNodeClick: (nodeId) => this.handleNodeClick(nodeId),
+      cteMetadata: this.visualizationData.cteMetadata
     });
 
     // Apply critical path if enabled

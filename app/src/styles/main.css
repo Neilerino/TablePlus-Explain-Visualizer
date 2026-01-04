@@ -520,6 +520,64 @@ body {
 }
 
 /* ============================================
+   CTE INTERACTION STYLING
+   ============================================ */
+
+/* CTE reference links (dashed links from scan to definition) */
+.cte-reference-link {
+  fill: none;
+  stroke: rgba(100, 150, 200, 0.6);
+  stroke-width: 2px;
+  stroke-dasharray: 5, 5;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.cte-reference-link:hover {
+  stroke: rgba(100, 150, 200, 1);
+  stroke-width: 3px;
+}
+
+/* Nodes highlighted via CTE interaction (bidirectional highlighting) */
+.node.cte-referenced rect {
+  stroke: rgba(100, 150, 200, 1) !important;
+  stroke-width: 3px !important;
+  filter: drop-shadow(0 0 8px rgba(100, 150, 200, 0.6));
+}
+
+/* Nodes highlighted when hovering over reference links */
+.node.cte-link-hover rect {
+  stroke: rgba(100, 150, 200, 1) !important;
+  stroke-width: 3px !important;
+  filter: drop-shadow(0 0 6px rgba(100, 150, 200, 0.5));
+}
+
+/* CTE label containers */
+.cte-label {
+  pointer-events: none;
+}
+
+.cte-label rect {
+  fill: rgba(100, 150, 200, 0.2);
+  stroke: rgba(100, 150, 200, 0.5);
+  stroke-width: 1px;
+  rx: 4px;
+}
+
+.cte-label text {
+  fill: rgba(100, 150, 200, 1);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* CTE usage count badge */
+.cte-label circle {
+  fill: rgba(100, 150, 200, 0.9);
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+
+/* ============================================
    VIEW TOGGLE TABS
    ============================================ */
 
