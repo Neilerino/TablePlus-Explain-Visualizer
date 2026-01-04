@@ -16,6 +16,7 @@ import { NodeRenderer } from './tree-renderer-components/node-renderer';
 import { CTEGroupManager } from './tree-renderer-components/cte-group-manager';
 import { InteractionController } from './tree-renderer-components/interaction-controller';
 import { ForestLayoutEngine } from './tree-renderer-components/forest-layout-engine';
+import { ForestLayoutManager } from './tree-renderer-components/forest-layout-manager';
 import { CTETreeExtractor, ForestLayout } from './cte-tree-extractor';
 
 export class D3TreeRenderer implements ITreeRenderer {
@@ -27,6 +28,7 @@ export class D3TreeRenderer implements ITreeRenderer {
   private cteManager: CTEGroupManager;
   private interactionController: InteractionController;
   private forestLayoutEngine: ForestLayoutEngine;
+  private forestLayoutManager: ForestLayoutManager;
   private cteTreeExtractor: CTETreeExtractor;
 
   private currentConfig: TreeRenderConfig | null = null;
@@ -47,6 +49,12 @@ export class D3TreeRenderer implements ITreeRenderer {
     this.cteManager = new CTEGroupManager(d3Instance);
     this.interactionController = new InteractionController(d3Instance);
     this.forestLayoutEngine = new ForestLayoutEngine(d3Instance);
+    this.forestLayoutManager = new ForestLayoutManager(
+      d3Instance,
+      this.linkRenderer,
+      this.nodeRenderer,
+      this.interactionController
+    );
     this.cteTreeExtractor = new CTETreeExtractor();
   }
 
@@ -101,6 +109,10 @@ export class D3TreeRenderer implements ITreeRenderer {
   /**
    * Render forest layout (main tree + disconnected CTE trees)
    */
+  /**
+   * Render forest layout (main tree + CTE trees)
+   * Delegates to ForestLayoutManager for complex forest rendering logic
+   */
   private renderForest(config: TreeRenderConfig): void {
     if (!config.cteMetadata) return;
 
@@ -114,20 +126,14 @@ export class D3TreeRenderer implements ITreeRenderer {
       mainTreeHasChildren: !!forestLayout.mainTree.children,
       mainTreeChildCount: forestLayout.mainTree.children?.length || 0,
       cteTreeCount: forestLayout.cteTrees.length,
-      cteTreeNames: forestLayout.cteTrees.map(t => t.cteName),
-      cteTreeDetails: forestLayout.cteTrees.map(t => ({
-        name: t.cteName,
-        hasChildren: !!t.tree.children,
-        childCount: t.tree.children?.length || 0,
-        nodeType: t.tree.name
-      }))
+      cteTreeNames: forestLayout.cteTrees.map(t => t.cteName)
     });
 
     // Store for CTE highlighting
     this.currentForestLayout = forestLayout;
     this.currentCTEMetadata = config.cteMetadata;
 
-    // 3. Calculate layouts for all trees FIRST (before creating canvas)
+    // 3. Calculate layouts for all trees
     const mainLayout = this.layoutEngine.calculateLayout(forestLayout.mainTree);
     const cteLayouts = forestLayout.cteTrees.map(({ cteName, tree }) => ({
       cteName,
@@ -145,210 +151,26 @@ export class D3TreeRenderer implements ITreeRenderer {
     // 4. Calculate forest positioning
     const forestPositioning = this.forestLayoutEngine.calculateForestLayout(mainLayout, cteLayouts);
 
-    console.log('📍 Forest Positioning:', {
-      mainTree: forestPositioning.mainTree.bounds,
-      cteTrees: forestPositioning.cteTrees.map(t => ({
-        name: t.cteName,
-        offset: { x: t.offsetX, y: t.offsetY },
-        bounds: t.bounds
-      })),
-      totalBounds: forestPositioning.totalBounds
-    });
-
-    // 5. Setup layout constants
-    const mainTreeX = 300; // Increased from 100 to ensure space for left-extending nodes
-    const mainTreeY = 100;
-    const mainTreeHeight = forestPositioning.mainTree.bounds.height;
-    const mainTreeWidth = forestPositioning.mainTree.bounds.width;
-
-    const cteStartX = 300; // Increased from 100 to ensure space for left-extending nodes
-    const cteStartY = mainTreeY + mainTreeHeight + 200;
-    const cteSpacing = 200;
-
-    // 6. Analyze CTE dependencies and arrange in layers
-    const cteLayers = this.analyzeCTEDependencies(forestPositioning.cteTrees, forestLayout.cteReferences);
-    console.log('📊 CTE Layers:', cteLayers);
-
-    // 7. Collect CTE tree positions first (for reference links and borders)
-    console.log('📍 Calculating CTE positions...');
-    const cteTreePositions: Array<{ cteName: string, x: number, y: number, bounds: any, layer: number }> = [];
-
-    let currentLayerY = cteStartY;
-    cteLayers.forEach((layerCTEs, layerIndex) => {
-      let currentX = cteStartX;
-      let maxHeightInLayer = 0;
-
-      layerCTEs.forEach(cteName => {
-        const positionedTree = forestPositioning.cteTrees.find(t => t.cteName === cteName);
-        if (!positionedTree) return;
-
-        // Calculate actual bounds from layout nodes
-        const nodes = positionedTree.layout.descendants();
-        let minX = Infinity, maxX = -Infinity;
-        let minY = Infinity, maxY = -Infinity;
-
-        const nodeWidth = 180;
-        const nodeHeight = 90;
-
-        nodes.forEach((node: any) => {
-          minX = Math.min(minX, node.x - nodeWidth / 2);
-          maxX = Math.max(maxX, node.x + nodeWidth / 2);
-          minY = Math.min(minY, node.y);
-          maxY = Math.max(maxY, node.y + nodeHeight);
-        });
-
-        const actualBounds = {
-          width: maxX - minX,
-          height: maxY - minY,
-          minX,
-          maxX,
-          minY,
-          maxY
-        };
-
-        cteTreePositions.push({
-          cteName,
-          x: currentX,
-          y: currentLayerY,
-          bounds: actualBounds,
-          layer: layerIndex
-        });
-
-        currentX += actualBounds.width + cteSpacing;
-        maxHeightInLayer = Math.max(maxHeightInLayer, actualBounds.height);
-      });
-
-      currentLayerY += maxHeightInLayer + 250; // Vertical gap between layers
-    });
-
-    // 8. Calculate canvas size based on actual CTE positions
-    const maxCTEX = Math.max(...cteTreePositions.map(p => p.x + p.bounds.width), mainTreeWidth + 200);
-    const maxCTEY = Math.max(...cteTreePositions.map(p => p.y + p.bounds.height), cteStartY);
-    const totalWidth = maxCTEX + 100;
-    const totalHeight = maxCTEY + 100;
-
-    console.log('📏 Canvas Layout:', {
-      mainTree: { x: mainTreeX, y: mainTreeY, width: mainTreeWidth, height: mainTreeHeight },
-      cteStart: { x: cteStartX, y: cteStartY },
-      totalDimensions: { width: totalWidth, height: totalHeight },
-      layers: cteLayers.length
-    });
-
+    // 5. Create canvas
     const margin = { top: 60, right: 40, bottom: 80, left: 40 };
     const canvas = this.canvasManager.createCanvas({
       container: config.container,
       margin: margin,
-      minWidth: totalWidth + margin.left + margin.right,
-      minHeight: totalHeight + margin.top + margin.bottom
+      minWidth: 2000, // Temporary - ForestLayoutManager will handle proper sizing
+      minHeight: 2000
     });
 
-    // 9. Render MAIN TREE
-    console.log('🌲 Rendering main tree...');
-    const mainTreeGroup = canvas.svg.append('g')
-      .attr('class', 'main-tree-group')
-      .attr('transform', `translate(${mainTreeX}, ${mainTreeY})`);
-
-    this.linkRenderer.renderLinks(mainTreeGroup, mainLayout);
-    this.nodeRenderer.renderNodes(mainTreeGroup, mainLayout, config.onNodeClick);
-
-    // 10. Render CTE border boxes (background layer)
-    console.log('📦 Rendering CTE borders...');
-    cteTreePositions.forEach((pos, index) => {
-      const padding = 20;
-      const labelHeight = 30;
-
-      const boxX = pos.x + pos.bounds.minX - padding;
-      const boxY = pos.y + pos.bounds.minY - labelHeight - padding;
-      const boxWidth = pos.bounds.width + padding * 2;
-      const boxHeight = pos.bounds.height + labelHeight + padding * 2;
-
-      // Border box
-      canvas.svg.append('rect')
-        .attr('class', 'cte-group-border')
-        .attr('x', boxX)
-        .attr('y', boxY)
-        .attr('width', boxWidth)
-        .attr('height', boxHeight)
-        .attr('fill', 'none')
-        .attr('stroke', 'rgba(100, 150, 200, 0.6)')
-        .attr('stroke-width', '2')
-        .attr('stroke-dasharray', '5,5')
-        .attr('rx', '8');
-
-      // Label background
-      canvas.svg.append('rect')
-        .attr('class', 'cte-label-bg')
-        .attr('x', boxX)
-        .attr('y', boxY)
-        .attr('width', boxWidth)
-        .attr('height', labelHeight)
-        .attr('fill', 'rgba(100, 150, 200, 0.15)')
-        .attr('rx', '8');
-
-      // Label text
-      canvas.svg.append('text')
-        .attr('class', 'cte-label')
-        .attr('x', boxX + padding)
-        .attr('y', boxY + labelHeight - 10)
-        .attr('fill', 'rgba(100, 150, 200, 1)')
-        .attr('font-size', '14px')
-        .attr('font-weight', '600')
-        .text(`CTE: ${pos.cteName} (Layer ${pos.layer})`);
-    });
-
-    // 11. Render reference links (behind nodes)
-    console.log('🔗 Rendering CTE reference links...');
-    this.renderCTEReferenceLinks(
-      canvas.svg,
+    // 6. Delegate rendering to ForestLayoutManager
+    this.forestLayoutManager.renderForest({
+      container: config.container,
+      canvas,
       mainLayout,
-      mainTreeX,
-      mainTreeY,
-      cteTreePositions,
-      forestPositioning.cteTrees,
-      forestLayout.cteReferences
-    );
-
-    // 12. Render CTE trees (on top)
-    console.log('🌳 Rendering CTE trees...');
-    cteTreePositions.forEach((pos, index) => {
-      const positionedTree = forestPositioning.cteTrees.find(t => t.cteName === pos.cteName);
-      if (!positionedTree) return;
-
-      // Create a group for this CTE tree
-      const treeGroup = canvas.svg.append('g')
-        .attr('class', `cte-tree-group cte-${index}`)
-        .attr('transform', `translate(${pos.x}, ${pos.y})`);
-
-      // Render tree content
-      this.linkRenderer.renderLinks(treeGroup, positionedTree.layout);
-      this.nodeRenderer.renderNodes(treeGroup, positionedTree.layout, config.onNodeClick);
+      mainTreeX: 300,
+      mainTreeY: 100,
+      forestPositioning,
+      forestLayout,
+      onNodeClick: config.onNodeClick
     });
-
-    // 13. Setup interactive controls and center on main tree root
-    this.interactionController.setupZoom(canvas);
-
-    // Get the root node position (should be at mainTreeX, mainTreeY)
-    const rootNode = mainLayout; // Root is the layout itself
-    const rootX = mainTreeX + (rootNode.layout.x || 0);
-    const rootY = mainTreeY + (rootNode.layout.y || 0);
-
-    console.log('🎯 Initial View Centering:', {
-      mainTreeX,
-      mainTreeY,
-      rootNodeX: rootNode.layout.x || 0,
-      rootNodeY: rootNode.layout.y || 0,
-      finalRootX: rootX,
-      finalRootY: rootY,
-      scale: 1.0
-    });
-
-    // Center view on root node at 100% zoom (readable text)
-    this.interactionController.centerOnPoint(
-      config.container,
-      rootX,
-      rootY,
-      1.0 // 100% zoom - readable and focused on root
-    );
   }
 
   /**
@@ -394,128 +216,6 @@ export class D3TreeRenderer implements ITreeRenderer {
     }
   }
 
-  /**
-   * Render dashed reference links from CTE Scan nodes to CTE definitions
-   */
-  private renderCTEReferenceLinks(
-    svg: any,
-    mainLayout: any,
-    mainTreeX: number,
-    mainTreeY: number,
-    cteTreePositions: Array<{ cteName: string, x: number, y: number, bounds: any }>,
-    positionedCTETrees: any[],
-    cteReferences: any[]
-  ): void {
-    // Build node position map from all trees
-    const nodePositions = new Map<string, { x: number; y: number }>();
-
-    // Collect positions from main tree
-    mainLayout.descendants().forEach((node: any) => {
-      if (node.data.id) {
-        nodePositions.set(node.data.id, {
-          x: node.x + mainTreeX,
-          y: node.y + mainTreeY
-        });
-      }
-    });
-
-    // Collect positions from CTE trees
-    positionedCTETrees.forEach((positionedTree: any) => {
-      // Match by CTE name, not by index (arrays may be in different orders due to layering)
-      const ctePos = cteTreePositions.find(p => p.cteName === positionedTree.cteName);
-      if (!ctePos) {
-        console.warn(`⚠️ Could not find position for CTE: ${positionedTree.cteName}`);
-        return;
-      }
-
-      positionedTree.layout.descendants().forEach((node: any) => {
-        if (node.data.id) {
-          nodePositions.set(node.data.id, {
-            x: node.x + ctePos.x,
-            y: node.y + ctePos.y
-          });
-        }
-      });
-    });
-
-    // Debug logging
-    console.log('🔗 Reference Link Debug:', {
-      totalReferences: cteReferences.length,
-      totalNodePositions: nodePositions.size,
-      mainTreeNodes: mainLayout.descendants().length,
-      cteTreeNodes: positionedCTETrees.reduce((sum, t) => sum + t.layout.descendants().length, 0)
-    });
-
-    // Draw reference links with interactive hover effects
-    let successCount = 0;
-    let failCount = 0;
-
-    cteReferences.forEach((ref, idx) => {
-      const sourcePos = nodePositions.get(ref.nodeId);
-      const targetPos = ref.targetCTENodeId ? nodePositions.get(ref.targetCTENodeId) : null;
-
-      if (!sourcePos) {
-        console.warn(`❌ Reference ${idx}: Source node ${ref.nodeId} not found`);
-        failCount++;
-        return;
-      }
-
-      if (!targetPos) {
-        console.warn(`❌ Reference ${idx}: Target node ${ref.targetCTENodeId} (CTE: ${ref.cteName}) not found`);
-        failCount++;
-        return;
-      }
-
-      if (sourcePos && targetPos) {
-        successCount++;
-
-        console.log(`🔗 Drawing link #${idx}:`, {
-          cteName: ref.cteName,
-          sourceNodeId: ref.nodeId,
-          targetNodeId: ref.targetCTENodeId,
-          sourcePos: { x: Math.round(sourcePos.x), y: Math.round(sourcePos.y) },
-          targetPos: { x: Math.round(targetPos.x), y: Math.round(targetPos.y) }
-        });
-
-        const linkGenerator = this.d3.linkVertical()
-          .x((d: any) => d.x)
-          .y((d: any) => d.y);
-
-        const link = svg.append('path')
-          .attr('class', 'cte-reference-link')
-          .attr('d', linkGenerator({
-            source: { x: sourcePos.x, y: sourcePos.y + 45 },  // From bottom of scan node
-            target: { x: targetPos.x, y: targetPos.y }         // To top of CTE node
-          }))
-          .attr('fill', 'none')
-          .attr('stroke', 'rgba(100, 150, 200, 0.6)')
-          .attr('stroke-width', 2)
-          .attr('stroke-dasharray', '5,5')
-          .style('cursor', 'pointer')
-          .on('mouseenter', () => {
-            // Brighten link
-            link.attr('stroke', 'rgba(100, 150, 200, 1)')
-              .attr('stroke-width', 3);
-
-            // Highlight source and target nodes
-            svg.selectAll('.node')
-              .filter((d: any) => d.data.id === ref.nodeId || d.data.id === ref.targetCTENodeId)
-              .classed('cte-link-hover', true);
-          })
-          .on('mouseleave', () => {
-            // Restore link
-            link.attr('stroke', 'rgba(100, 150, 200, 0.6)')
-              .attr('stroke-width', 2);
-
-            // Remove highlight from nodes
-            svg.selectAll('.node')
-              .classed('cte-link-hover', false);
-          });
-      }
-    });
-
-    console.log(`✅ Reference Links: ${successCount} drawn, ${failCount} failed`);
-  }
 
   /**
    * Render labels above each CTE tree with usage count badges
@@ -751,82 +451,6 @@ export class D3TreeRenderer implements ITreeRenderer {
     this.interactionController.toggleCriticalPath(criticalPath, enabled);
   }
 
-  /**
-   * Analyze CTE dependencies and arrange into layers using topological sort
-   * CTEs with no dependencies go in layer 0, CTEs that depend on layer 0 go in layer 1, etc.
-   */
-  private analyzeCTEDependencies(cteTrees: any[], cteReferences: any[]): string[][] {
-    // Build dependency graph: Map<cteName, Set<dependsOnCTEName>>
-    const dependencies = new Map<string, Set<string>>();
-    const allCTEs = new Set<string>();
-
-    // Initialize with all CTE names
-    cteTrees.forEach(tree => {
-      allCTEs.add(tree.cteName);
-      dependencies.set(tree.cteName, new Set());
-    });
-
-    // Find CTE-to-CTE dependencies
-    // A CTE depends on another if it has a CTE Scan node that references that other CTE
-    cteReferences.forEach(ref => {
-      // Find which CTE contains this reference node
-      const containingCTE = cteTrees.find(tree => {
-        return tree.layout.descendants().some((node: any) => node.data?.id === ref.nodeId);
-      });
-
-      if (containingCTE && ref.cteName && ref.cteName !== containingCTE.cteName) {
-        // containingCTE depends on ref.cteName
-        dependencies.get(containingCTE.cteName)?.add(ref.cteName);
-      }
-    });
-
-    // Topological sort using Kahn's algorithm
-    const layers: string[][] = [];
-    const inDegree = new Map<string, number>();
-    const remaining = new Set(allCTEs);
-
-    // Calculate in-degrees
-    allCTEs.forEach(cte => {
-      inDegree.set(cte, 0);
-    });
-
-    dependencies.forEach((deps, cte) => {
-      deps.forEach(dep => {
-        inDegree.set(dep, (inDegree.get(dep) || 0) + 1);
-      });
-    });
-
-    // Process layers
-    while (remaining.size > 0) {
-      // Find CTEs with no dependencies (in-degree = 0)
-      const currentLayer: string[] = [];
-      remaining.forEach(cte => {
-        if (inDegree.get(cte) === 0) {
-          currentLayer.push(cte);
-        }
-      });
-
-      if (currentLayer.length === 0) {
-        // Circular dependency or isolated nodes - add remaining to last layer
-        remaining.forEach(cte => currentLayer.push(cte));
-      }
-
-      layers.push(currentLayer);
-
-      // Remove current layer and update in-degrees
-      currentLayer.forEach(cte => {
-        remaining.delete(cte);
-        const dependents = dependencies.get(cte);
-        if (dependents) {
-          dependents.forEach(dep => {
-            inDegree.set(dep, (inDegree.get(dep) || 0) - 1);
-          });
-        }
-      });
-    }
-
-    return layers;
-  }
 
   /**
    * Clean up and destroy the renderer

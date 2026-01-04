@@ -46,13 +46,6 @@ export class VisualizationController {
     this.visualizationData = data;
     this.onNodeSelectCallback = onNodeSelect;
 
-    // Initialize critical path on tree renderer
-    if (data.criticalPath && data.criticalPath.length > 0) {
-      if (this.treeRenderer instanceof Object && 'initializeCriticalPath' in this.treeRenderer) {
-        (this.treeRenderer as any).initializeCriticalPath(data.criticalPath);
-      }
-    }
-
     // Render initial view based on state
     this.renderCurrentView();
   }
@@ -143,6 +136,13 @@ export class VisualizationController {
       onNodeClick: (nodeId) => this.handleNodeClick(nodeId),
       cteMetadata: this.visualizationData.cteMetadata
     });
+
+    // Initialize critical path on tree renderer (after render, when SVG is ready)
+    if (this.visualizationData.criticalPath && this.visualizationData.criticalPath.length > 0) {
+      if (this.treeRenderer instanceof Object && 'initializeCriticalPath' in this.treeRenderer) {
+        (this.treeRenderer as any).initializeCriticalPath(this.visualizationData.criticalPath);
+      }
+    }
 
     // Apply critical path if enabled
     if (this.stateManager.isCriticalPathEnabled && this.visualizationData.criticalPath) {
